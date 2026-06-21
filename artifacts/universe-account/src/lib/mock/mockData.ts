@@ -169,17 +169,22 @@ export const initialSessions: Session[] = [
 ];
 
 export const initialDevices: Device[] = [
+  // Desktop
   ...initialUsers.map(user => ({
     id: `device-${user.id}-mac`,
     userId: user.id,
     name: "MacBook Pro 16\"",
     type: "desktop" as const,
     os: "macOS 14 Sonoma",
-    browser: "Chrome 120",
+    browser: "Chrome 124",
     trusted: true,
     lastSeen: new Date().toISOString(),
-    registeredAt: new Date(Date.now() - 86400000 * 30).toISOString()
+    registeredAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+    ip: "192.168.1.1",
+    location: "San Francisco, CA",
+    isCurrentDevice: true,
   })),
+  // Mobile
   ...initialUsers.map(user => ({
     id: `device-${user.id}-iphone`,
     userId: user.id,
@@ -189,17 +194,69 @@ export const initialDevices: Device[] = [
     browser: "Safari 17",
     trusted: true,
     lastSeen: new Date(Date.now() - 7200000).toISOString(),
-    registeredAt: new Date(Date.now() - 86400000 * 14).toISOString()
+    registeredAt: new Date(Date.now() - 86400000 * 14).toISOString(),
+    ip: "10.0.0.12",
+    location: "San Francisco, CA",
+    isCurrentDevice: false,
   })),
+  // Tablet
   ...initialUsers.map(user => ({
     id: `device-${user.id}-ipad`,
     userId: user.id,
-    name: "iPad Pro",
+    name: "iPad Pro 12.9\"",
     type: "tablet" as const,
-    os: "iPadOS 17",
+    os: "iPadOS 17.2",
     browser: "Safari 17",
     trusted: false,
     lastSeen: new Date(Date.now() - 86400000 * 3).toISOString(),
-    registeredAt: new Date(Date.now() - 86400000 * 7).toISOString()
-  }))
+    registeredAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+    ip: "192.168.1.5",
+    location: "New York, NY",
+    isCurrentDevice: false,
+  })),
+  // VR — admin only
+  {
+    id: "device-user-admin-vr",
+    userId: "user-admin",
+    name: "Meta Quest 3",
+    type: "vr" as const,
+    os: "Meta OS 62",
+    browser: "Quest Browser 31",
+    trusted: true,
+    lastSeen: new Date(Date.now() - 86400000 * 1).toISOString(),
+    registeredAt: new Date(Date.now() - 86400000 * 20).toISOString(),
+    ip: "192.168.1.8",
+    location: "San Francisco, CA",
+    isCurrentDevice: false,
+  },
+  // AR — admin only
+  {
+    id: "device-user-admin-ar",
+    userId: "user-admin",
+    name: "Apple Vision Pro",
+    type: "ar" as const,
+    os: "visionOS 1.1",
+    browser: "Safari 17",
+    trusted: false,
+    lastSeen: new Date(Date.now() - 86400000 * 5).toISOString(),
+    registeredAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    ip: "192.168.1.9",
+    location: "San Francisco, CA",
+    isCurrentDevice: false,
+  },
+  // Extra mobile for creator
+  {
+    id: "device-user-creator-android",
+    userId: "user-creator",
+    name: "Samsung Galaxy S24",
+    type: "mobile" as const,
+    os: "Android 14",
+    browser: "Chrome 124",
+    trusted: false,
+    lastSeen: new Date(Date.now() - 86400000 * 2).toISOString(),
+    registeredAt: new Date(Date.now() - 86400000 * 12).toISOString(),
+    ip: "172.16.0.3",
+    location: "Austin, TX",
+    isCurrentDevice: false,
+  },
 ];
