@@ -14,6 +14,7 @@ const DevicesPage = lazy(() => import("@/pages/DevicesPage"));
 const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
 const RolesPage = lazy(() => import("@/pages/RolesPage"));
 const EcosystemPage = lazy(() => import("@/pages/EcosystemPage"));
+const IdentityPage = lazy(() => import("@/pages/IdentityPage"));
 
 const queryClient = new QueryClient();
 
@@ -49,6 +50,9 @@ function Router() {
         )} />
         <Route path="/ecosystem" component={() => (
           <ProtectedRoute><EcosystemPage /></ProtectedRoute>
+        )} />
+        <Route path="/identity" component={() => (
+          <ProtectedRoute><IdentityPage /></ProtectedRoute>
         )} />
         <Route component={() => <Redirect to="/account-center" />} />
       </Switch>
