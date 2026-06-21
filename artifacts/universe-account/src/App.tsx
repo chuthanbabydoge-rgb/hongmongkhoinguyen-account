@@ -18,6 +18,7 @@ const IdentityPage = lazy(() => import("@/pages/IdentityPage"));
 const DirectoryPage = lazy(() => import("@/pages/DirectoryPage"));
 const AchievementsPage = lazy(() => import("@/pages/AchievementsPage"));
 const ReputationPage = lazy(() => import("@/pages/ReputationPage"));
+const NotificationsPage = lazy(() => import("@/pages/NotificationsPage"));
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,9 @@ function Router() {
         )} />
         <Route path="/reputation" component={() => (
           <ProtectedRoute><ReputationPage /></ProtectedRoute>
+        )} />
+        <Route path="/notifications" component={() => (
+          <ProtectedRoute><NotificationsPage /></ProtectedRoute>
         )} />
         <Route component={() => <Redirect to="/account-center" />} />
       </Switch>
