@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "G_x0VOnw7LLZ4txVUut1m"
+uri = "file://tientrinhhethong.md"
+type = "text"
+title = "Tiến Trình Hệ Thống"
