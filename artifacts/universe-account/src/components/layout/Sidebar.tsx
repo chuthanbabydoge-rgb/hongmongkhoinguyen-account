@@ -5,7 +5,7 @@ import { RoleBadge } from "@/components/auth/RoleBadge";
 import { cn } from "@/lib/utils";
 import {
   User, Shield, Monitor, Clock, LogOut,
-  ChevronLeft, ChevronRight, Hexagon, ShieldCheck, Globe2, Fingerprint, BookUser
+  ChevronLeft, ChevronRight, Hexagon, ShieldCheck, Globe2, Fingerprint, BookUser, Trophy
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,6 +18,7 @@ const navItems = [
   { path: "/ecosystem", label: "Ecosystem", icon: Globe2 },
   { path: "/identity", label: "Digital Identity", icon: Fingerprint },
   { path: "/directory", label: "Directory", icon: BookUser },
+  { path: "/achievements", label: "Achievements", icon: Trophy },
 ];
 
 export function Sidebar() {
