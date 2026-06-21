@@ -5,7 +5,7 @@ import { RoleBadge } from "@/components/auth/RoleBadge";
 import { cn } from "@/lib/utils";
 import {
   User, Shield, Monitor, Clock, LogOut,
-  ChevronLeft, ChevronRight, Hexagon
+  ChevronLeft, ChevronRight, Hexagon, ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -14,6 +14,7 @@ const navItems = [
   { path: "/security-center", label: "Security Center", icon: Shield },
   { path: "/devices", label: "Devices", icon: Monitor },
   { path: "/sessions", label: "Sessions", icon: Clock },
+  { path: "/roles", label: "Roles & Permissions", icon: ShieldCheck },
 ];
 
 export function Sidebar() {

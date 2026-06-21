@@ -12,6 +12,7 @@ const AccountCenterPage = lazy(() => import("@/pages/AccountCenterPage"));
 const SecurityCenterPage = lazy(() => import("@/pages/SecurityCenterPage"));
 const DevicesPage = lazy(() => import("@/pages/DevicesPage"));
 const SessionsPage = lazy(() => import("@/pages/SessionsPage"));
+const RolesPage = lazy(() => import("@/pages/RolesPage"));
 
 const queryClient = new QueryClient();
 
@@ -41,6 +42,9 @@ function Router() {
         )} />
         <Route path="/sessions" component={() => (
           <ProtectedRoute><SessionsPage /></ProtectedRoute>
+        )} />
+        <Route path="/roles" component={() => (
+          <ProtectedRoute><RolesPage /></ProtectedRoute>
         )} />
         <Route component={() => <Redirect to="/account-center" />} />
       </Switch>
