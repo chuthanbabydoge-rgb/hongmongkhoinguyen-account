@@ -1,11 +1,10 @@
 export type NotificationCategory =
   | "system"
-  | "identity"
-  | "safepass"
-  | "football"
-  | "animals"
-  | "worlds"
-  | "exchange";
+  | "security"
+  | "marketplace"
+  | "rewards"
+  | "social"
+  | "world_events";
 
 export type NotificationPriority = "low" | "medium" | "high" | "urgent";
 export type NotificationType = "info" | "success" | "warning" | "error" | "announcement";
@@ -34,7 +33,7 @@ export interface NotificationSettings {
   globalSound: boolean;
   globalPush: boolean;
   doNotDisturb: boolean;
-  dndFrom?: string; // "HH:MM"
+  dndFrom?: string;
   dndTo?: string;
 }
 
@@ -43,7 +42,7 @@ export const CATEGORY_META: Record<
   { label: string; icon: string; color: string; text: string; bg: string; border: string; gradient: string }
 > = {
   system: {
-    label: "System",
+    label: "Hệ Thống",
     icon: "⚙️",
     color: "text-slate-300",
     text: "text-slate-200",
@@ -51,17 +50,8 @@ export const CATEGORY_META: Record<
     border: "border-slate-400/25",
     gradient: "from-slate-400/15 to-slate-600/8",
   },
-  identity: {
-    label: "Identity",
-    icon: "🪪",
-    color: "text-violet-300",
-    text: "text-violet-200",
-    bg: "bg-violet-500/10",
-    border: "border-violet-500/25",
-    gradient: "from-violet-400/15 to-purple-600/8",
-  },
-  safepass: {
-    label: "SafePass",
+  security: {
+    label: "Bảo Mật",
     icon: "🛡️",
     color: "text-cyan-300",
     text: "text-cyan-200",
@@ -69,26 +59,35 @@ export const CATEGORY_META: Record<
     border: "border-cyan-500/25",
     gradient: "from-cyan-400/15 to-blue-600/8",
   },
-  football: {
-    label: "Football Universe",
-    icon: "⚽",
+  marketplace: {
+    label: "Chợ Trực Tuyến",
+    icon: "💱",
     color: "text-emerald-300",
     text: "text-emerald-200",
     bg: "bg-emerald-500/10",
     border: "border-emerald-500/25",
     gradient: "from-emerald-400/15 to-teal-600/8",
   },
-  animals: {
-    label: "Animal Evolution",
-    icon: "🧬",
+  rewards: {
+    label: "Phần Thưởng",
+    icon: "🎁",
     color: "text-amber-300",
     text: "text-amber-200",
     bg: "bg-amber-500/10",
     border: "border-amber-500/25",
     gradient: "from-amber-400/15 to-orange-600/8",
   },
-  worlds: {
-    label: "World Creator",
+  social: {
+    label: "Mạng Xã Hội",
+    icon: "🌐",
+    color: "text-violet-300",
+    text: "text-violet-200",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/25",
+    gradient: "from-violet-400/15 to-purple-600/8",
+  },
+  world_events: {
+    label: "Sự Kiện Thế Giới",
     icon: "🌍",
     color: "text-blue-300",
     text: "text-blue-200",
@@ -96,31 +95,22 @@ export const CATEGORY_META: Record<
     border: "border-blue-500/25",
     gradient: "from-blue-400/15 to-indigo-600/8",
   },
-  exchange: {
-    label: "Exchange Hub",
-    icon: "💱",
-    color: "text-rose-300",
-    text: "text-rose-200",
-    bg: "bg-rose-500/10",
-    border: "border-rose-500/25",
-    gradient: "from-rose-400/15 to-pink-600/8",
-  },
 };
 
 export const PRIORITY_META: Record<
   NotificationPriority,
-  { label: string; dot: string; ring: string }
+  { label: string; dot: string; ring: string; badge: string }
 > = {
-  low: { label: "Low", dot: "bg-white/20", ring: "" },
-  medium: { label: "Medium", dot: "bg-amber-400", ring: "" },
-  high: { label: "High", dot: "bg-orange-400", ring: "ring-1 ring-orange-400/40" },
-  urgent: { label: "Urgent", dot: "bg-red-400 animate-pulse", ring: "ring-1 ring-red-400/50" },
+  low: { label: "Thấp", dot: "bg-white/20", ring: "", badge: "bg-white/8 text-white/25" },
+  medium: { label: "Trung bình", dot: "bg-amber-400", ring: "", badge: "bg-amber-500/15 text-amber-300" },
+  high: { label: "Cao", dot: "bg-orange-400", ring: "ring-1 ring-orange-400/40", badge: "bg-orange-500/15 text-orange-300" },
+  urgent: { label: "Khẩn cấp", dot: "bg-red-400 animate-pulse", ring: "ring-1 ring-red-400/50", badge: "bg-red-500/15 text-red-300" },
 };
 
-export const TYPE_ICON: Record<NotificationType, string> = {
-  info: "ℹ️",
-  success: "✅",
-  warning: "⚠️",
-  error: "🔴",
-  announcement: "📢",
+export const TYPE_META: Record<NotificationType, { icon: string; label: string; color: string }> = {
+  info: { icon: "ℹ️", label: "Thông tin", color: "text-blue-300" },
+  success: { icon: "✅", label: "Thành công", color: "text-emerald-300" },
+  warning: { icon: "⚠️", label: "Cảnh báo", color: "text-amber-300" },
+  error: { icon: "🔴", label: "Lỗi", color: "text-red-300" },
+  announcement: { icon: "📢", label: "Thông báo", color: "text-violet-300" },
 };

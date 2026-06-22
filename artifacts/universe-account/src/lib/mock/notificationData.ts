@@ -1,6 +1,6 @@
 import { Notification, NotificationCategory, NotificationType, NotificationPriority } from "../types/notification";
 
-let counter = 1000;
+let counter = 2000;
 function uid() { return `notif-${++counter}`; }
 
 function n(
@@ -33,40 +33,197 @@ function n(
 }
 
 export const initialNotifications: Notification[] = [
-  // ── Admin notifications ──────────────────────────────────────────────────
-  n("user-admin", "safepass", "warning", "urgent", "Suspicious Login Attempt", "A login was attempted from an unrecognized device in São Paulo, Brazil. If this wasn't you, revoke access immediately.", 2, false, "Review Devices", "/devices"),
-  n("user-admin", "identity", "success", "high", "Diamond Verification Achieved", "Your identity has been upgraded to Diamond tier. You now have access to all governance and elite marketplace features.", 15, false, "View Reputation", "/reputation"),
-  n("user-admin", "exchange", "info", "high", "Large Trade Completed", "Your sale of Cosmic Artifact for 98,000 UC has been confirmed. Funds have been credited to your wallet.", 47, false, "Trade History", "/reputation"),
-  n("user-admin", "football", "announcement", "medium", "Season 12 Begins", "Football Universe Season 12 is now live. Your squad has been seeded in Division 1 based on your Diamond reputation.", 120, false, "View Squad", "/"),
-  n("user-admin", "system", "info", "medium", "Platform Maintenance Completed", "Scheduled maintenance on the Quantum Forge cluster has been completed. All services are running normally.", 180, true),
-  n("user-admin", "animals", "success", "medium", "Rare Evolution Unlocked", "Your Stellar Dragon has evolved to Tier 5 — Cosmic form. This evolution was triggered by your milestone of 100+ successful trades.", 240, true, "View Creature", "/"),
-  n("user-admin", "worlds", "info", "low", "World Rating Updated", "Nebula Nexus has been rated ⭐⭐⭐⭐⭐ by 34 new visitors this week. Your world is trending in the Explorer category.", 360, true),
-  n("user-admin", "safepass", "success", "medium", "2FA Authentication Enabled", "Two-factor authentication has been successfully enabled on your account. Your SafePass rating has increased by +8 points.", 480, true),
-  n("user-admin", "identity", "info", "low", "Profile Endorsement Received", "CelestialK has endorsed your trading reputation. Your endorsement count is now 142.", 720, true),
-  n("user-admin", "exchange", "warning", "high", "Trade Dispute Opened", "VoidRunner has opened a dispute on trade #tr-a008. A moderator will review within 24 hours.", 1440, true, "View Dispute", "/reputation"),
-  n("user-admin", "system", "announcement", "medium", "New Feature: Reputation System", "The Universe Reputation System is now live. Check your Trust Score, Marketplace Rating, and Verification Level.", 2880, true, "View Reputation", "/reputation"),
-  n("user-admin", "football", "success", "low", "Match Result: 3-1 Victory", "Your team won 3-1 against Void Rangers in the Quarter Finals. Your squad rating increased by +2.", 4320, true),
-  n("user-admin", "worlds", "warning", "medium", "World Capacity Warning", "Crystal Matrix is at 94% capacity. Consider upgrading your hosting tier to avoid performance issues.", 5760, true, "Upgrade World", "/"),
-  n("user-admin", "animals", "info", "low", "Daily Breeding Result", "Breeding attempt successful: Neon Fox × Stellar Wolf produced a Rare Aurora Hybrid. Check your collection.", 7200, true),
-  n("user-admin", "safepass", "info", "low", "Session Expired", "Your session on Mobile Device was automatically ended after 7 days of inactivity.", 10080, true),
+  // ── Admin notifications ───────────────────────────────────────────────────
 
-  // ── Creator notifications ────────────────────────────────────────────────
-  n("user-creator", "exchange", "success", "high", "Asset Sale Confirmed", "Your Art Module sold for 3,200 UC. Payment has been credited to your wallet.", 30, false, "View Trades", "/reputation"),
-  n("user-creator", "safepass", "warning", "high", "Weak Password Detected", "Your current password was found in a known breach database. Please update it immediately.", 90, false, "Change Password", "/security-center"),
-  n("user-creator", "identity", "info", "medium", "Gold Verification Maintained", "Your identity verification has been renewed for another 90 days. Keep up your trade activity to progress to Platinum.", 200, false),
-  n("user-creator", "worlds", "success", "medium", "New World Follower", "GlowMesh has started following your World Creator portfolio. You now have 38 followers.", 310, true),
-  n("user-creator", "system", "announcement", "medium", "Achievement System Launched", "You've unlocked 12 achievements so far. Check the Achievements page to see your progress.", 500, true, "View Achievements", "/achievements"),
-  n("user-creator", "football", "info", "low", "Transfer Window Open", "The Summer Transfer Window is now open. You can sign up to 3 new players before matchday.", 800, true),
-  n("user-creator", "exchange", "warning", "high", "Dispute Filed Against You", "RiftCraft has filed a dispute on trade #tr-c004. Please respond within 48 hours with evidence.", 1200, true, "Respond to Dispute", "/reputation"),
-  n("user-creator", "animals", "success", "low", "Evolution Milestone", "Your collection has reached 25 creatures. You've unlocked the Collector Bronze achievement.", 2000, true),
-  n("user-creator", "identity", "success", "medium", "New Endorsement", "SkyNode has endorsed your community contributions. Total endorsements: 38.", 3000, true),
+  // Security (Bảo mật)
+  n("user-admin", "security", "warning", "urgent",
+    "Phát Hiện Đăng Nhập Đáng Ngờ",
+    "Một lần đăng nhập được thực hiện từ thiết bị không được nhận dạng tại São Paulo, Brazil. Nếu đây không phải bạn, hãy thu hồi quyền truy cập ngay lập tức.",
+    2, false, "Xem Thiết Bị", "/devices"),
+
+  n("user-admin", "security", "success", "medium",
+    "Xác Thực 2FA Đã Bật",
+    "Xác thực hai yếu tố đã được bật thành công trên tài khoản của bạn. Điểm SafePass của bạn đã tăng thêm +8 điểm.",
+    480, true),
+
+  n("user-admin", "security", "info", "low",
+    "Phiên Đăng Nhập Hết Hạn",
+    "Phiên của bạn trên Thiết Bị Di Động đã tự động kết thúc sau 7 ngày không hoạt động.",
+    10080, true),
+
+  // System (Hệ thống)
+  n("user-admin", "system", "info", "medium",
+    "Bảo Trì Nền Tảng Hoàn Tất",
+    "Đợt bảo trì theo lịch trình trên cụm Quantum Forge đã hoàn thành. Tất cả các dịch vụ đang hoạt động bình thường.",
+    180, true),
+
+  n("user-admin", "system", "announcement", "medium",
+    "Hệ Thống Danh Tiếng Mới Ra Mắt",
+    "Hệ Thống Danh Tiếng Universe hiện đã ra mắt. Kiểm tra Điểm Tin Cậy, Xếp Hạng Chợ và Cấp Độ Xác Minh của bạn.",
+    2880, true, "Xem Danh Tiếng", "/reputation"),
+
+  n("user-admin", "system", "warning", "medium",
+    "Giới Hạn Lưu Trữ Sắp Đạt",
+    "Tài khoản của bạn đang ở mức 87% dung lượng lưu trữ. Hãy cân nhắc lưu trữ dữ liệu cũ hoặc nâng cấp gói.",
+    4320, true),
+
+  // Marketplace (Chợ trực tuyến)
+  n("user-admin", "marketplace", "info", "high",
+    "Giao Dịch Lớn Đã Hoàn Thành",
+    "Việc bán Cosmic Artifact của bạn với giá 98.000 UC đã được xác nhận. Tiền đã được ghi có vào ví của bạn.",
+    47, false, "Lịch Sử Giao Dịch", "/reputation"),
+
+  n("user-admin", "marketplace", "warning", "high",
+    "Tranh Chấp Giao Dịch Được Mở",
+    "VoidRunner đã mở tranh chấp về giao dịch #tr-a008. Người kiểm duyệt sẽ xem xét trong vòng 24 giờ.",
+    1440, true, "Xem Tranh Chấp", "/reputation"),
+
+  n("user-admin", "marketplace", "success", "medium",
+    "Đề Nghị Mua Nhận Được",
+    "Người mua đã đề nghị 2.400 UC cho danh sách Quantum Shard của bạn. Chấp nhận hoặc phản hồi trong vòng 24 giờ.",
+    720, false, "Xem Đề Nghị", "/"),
+
+  n("user-admin", "marketplace", "warning", "high",
+    "Cảnh Báo Giá Được Kích Hoạt",
+    "Nebula Crystal đã giảm xuống dưới ngưỡng cảnh báo 3.000 UC của bạn. Giá hiện tại: 2.870 UC.",
+    360, true, "Xem Thị Trường", "/"),
+
+  // Rewards (Phần thưởng)
+  n("user-admin", "rewards", "success", "high",
+    "Đạt Cấp Độ Kim Cương!",
+    "Danh tính của bạn đã được nâng cấp lên bậc Diamond. Bạn hiện có quyền truy cập vào tất cả các tính năng quản trị và chợ cao cấp.",
+    15, false, "Xem Danh Tiếng", "/reputation"),
+
+  n("user-admin", "rewards", "success", "medium",
+    "Tiến Hóa Hiếm Được Mở Khóa",
+    "Stellar Dragon của bạn đã tiến hóa lên Bậc 5 — dạng Vũ Trụ. Tiến hóa này được kích hoạt bởi cột mốc 100+ giao dịch thành công của bạn.",
+    240, true, "Xem Sinh Vật", "/"),
+
+  n("user-admin", "rewards", "announcement", "medium",
+    "Thưởng Hoàn Thành 30 Ngày",
+    "Bạn đã đăng nhập liên tiếp 30 ngày! Phần thưởng đặc biệt: Khung hồ sơ Aurora + 500 XP đã được gửi đến tài khoản của bạn.",
+    5760, true, "Nhận Thưởng", "/avatar"),
+
+  n("user-admin", "rewards", "success", "low",
+    "Thành Tích Mới Mở Khóa",
+    "Bạn đã mở khóa thành tích 'Chúa Tể Vũ Trụ'! +100 điểm thành tích và danh hiệu độc quyền đã được thêm vào hồ sơ của bạn.",
+    7200, true, "Xem Thành Tích", "/achievements"),
+
+  // Social (Mạng xã hội)
+  n("user-admin", "social", "info", "low",
+    "Hồ Sơ Được Chứng Thực",
+    "CelestialK đã chứng thực danh tiếng giao dịch của bạn. Số lượt chứng thực hiện tại của bạn là 142.",
+    720, true),
+
+  n("user-admin", "social", "success", "medium",
+    "Bình Luận Mới Trên Hồ Sơ",
+    "QuantumForge đã để lại đánh giá 5 sao trên hồ sơ của bạn: 'Người giao dịch đáng tin cậy nhất tôi từng làm việc cùng!'",
+    2160, true),
+
+  n("user-admin", "social", "info", "low",
+    "Người Theo Dõi Mới",
+    "NebulaDancer, StarSculptor và 8 người dùng khác đã bắt đầu theo dõi hồ sơ của bạn tuần này.",
+    4320, true),
+
+  // World Events (Sự kiện thế giới)
+  n("user-admin", "world_events", "success", "medium",
+    "Xếp Hạng Thế Giới Cập Nhật",
+    "Nebula Nexus đã được xếp hạng ⭐⭐⭐⭐⭐ bởi 34 du khách mới trong tuần này. Thế giới của bạn đang thịnh hành trong danh mục Explorer.",
+    360, true),
+
+  n("user-admin", "world_events", "warning", "medium",
+    "Cảnh Báo Công Suất Thế Giới",
+    "Crystal Matrix đang ở 94% công suất. Hãy cân nhắc nâng cấp gói lưu trữ để tránh các vấn đề hiệu suất.",
+    5760, true, "Nâng Cấp Thế Giới", "/"),
+
+  n("user-admin", "world_events", "announcement", "medium",
+    "Mùa Giải 12 Bắt Đầu",
+    "Football Universe Mùa Giải 12 hiện đã ra mắt. Đội của bạn đã được xếp hạt giống ở Hạng 1 dựa trên danh tiếng Diamond của bạn.",
+    120, false, "Xem Đội", "/"),
+
+  n("user-admin", "world_events", "success", "low",
+    "Cột Mốc Thế Giới: 10.000 Du Khách",
+    "Thế giới của bạn đã được ghé thăm 10.000 lần tổng cộng! Một thành tích mới đã được mở khóa: 'Vũ Trụ Riêng'.",
+    10080, true, "Xem Thành Tích", "/achievements"),
+
+  // ── Creator notifications ─────────────────────────────────────────────────
+
+  n("user-creator", "marketplace", "success", "high",
+    "Tài Sản Bán Thành Công",
+    "Art Module của bạn đã bán được 3.200 UC. Thanh toán đã được ghi có vào ví của bạn.",
+    30, false, "Xem Giao Dịch", "/reputation"),
+
+  n("user-creator", "security", "warning", "high",
+    "Phát Hiện Mật Khẩu Yếu",
+    "Mật khẩu hiện tại của bạn đã được tìm thấy trong cơ sở dữ liệu vi phạm đã biết. Hãy cập nhật ngay lập tức.",
+    90, false, "Đổi Mật Khẩu", "/security-center"),
+
+  n("user-creator", "social", "info", "medium",
+    "Duy Trì Xác Minh Vàng",
+    "Xác minh danh tính của bạn đã được gia hạn thêm 90 ngày. Duy trì hoạt động giao dịch để tiến lên Platinum.",
+    200, false),
+
+  n("user-creator", "world_events", "success", "medium",
+    "Người Theo Dõi Thế Giới Mới",
+    "GlowMesh đã bắt đầu theo dõi danh mục World Creator của bạn. Bạn hiện có 38 người theo dõi.",
+    310, true),
+
+  n("user-creator", "system", "announcement", "medium",
+    "Hệ Thống Thành Tích Ra Mắt",
+    "Bạn đã mở khóa 12 thành tích cho đến nay. Xem trang Thành Tích để theo dõi tiến trình của bạn.",
+    500, true, "Xem Thành Tích", "/achievements"),
+
+  n("user-creator", "marketplace", "warning", "high",
+    "Tranh Chấp Đã Được Nộp",
+    "RiftCraft đã nộp tranh chấp về giao dịch #tr-c004. Vui lòng phản hồi trong vòng 48 giờ với bằng chứng.",
+    1200, true, "Phản Hồi Tranh Chấp", "/reputation"),
+
+  n("user-creator", "rewards", "success", "low",
+    "Cột Mốc Bộ Sưu Tập",
+    "Bộ sưu tập của bạn đã đạt 25 sinh vật. Bạn đã mở khóa thành tích Nhà Sưu Tập Đồng.",
+    2000, true),
+
+  n("user-creator", "social", "success", "medium",
+    "Chứng Thực Mới",
+    "SkyNode đã chứng thực đóng góp cộng đồng của bạn. Tổng số lượt chứng thực: 38.",
+    3000, true),
+
+  n("user-creator", "world_events", "info", "low",
+    "Mùa Chuyển Nhượng Mở Cửa",
+    "Mùa Chuyển Nhượng Hè hiện đã mở. Bạn có thể ký hợp đồng tối đa 3 cầu thủ mới trước ngày thi đấu.",
+    800, true),
 
   // ── Regular user notifications ────────────────────────────────────────────
-  n("user-regular", "system", "announcement", "high", "Welcome to Universe!", "Your account is set up and ready. Start by exploring your Account Center and completing your profile.", 60, false, "Account Center", "/account-center"),
-  n("user-regular", "safepass", "warning", "urgent", "Enable 2FA Now", "Your account does not have two-factor authentication enabled. Enable it to boost your SafePass rating and secure your account.", 120, false, "Enable 2FA", "/security-center"),
-  n("user-regular", "identity", "info", "medium", "Bronze Verification Active", "You're currently at Bronze verification level. Complete more trades to progress toward Silver.", 200, false, "View Reputation", "/reputation"),
-  n("user-regular", "exchange", "success", "medium", "First Trade Completed", "Congratulations on completing your first trade! You've earned the First Steps achievement.", 400, true),
-  n("user-regular", "football", "info", "low", "Welcome to Football Universe", "You've been registered for the current season. Your starting squad awaits your tactical setup.", 600, true, "Set Up Squad", "/"),
+
+  n("user-regular", "system", "announcement", "high",
+    "Chào Mừng Đến Universe!",
+    "Tài khoản của bạn đã được thiết lập và sẵn sàng. Hãy bắt đầu bằng cách khám phá Trung Tâm Tài Khoản và hoàn thiện hồ sơ của bạn.",
+    60, false, "Trung Tâm Tài Khoản", "/account-center"),
+
+  n("user-regular", "security", "warning", "urgent",
+    "Bật 2FA Ngay Bây Giờ",
+    "Tài khoản của bạn chưa bật xác thực hai yếu tố. Bật ngay để tăng điểm SafePass và bảo vệ tài khoản.",
+    120, false, "Bật 2FA", "/security-center"),
+
+  n("user-regular", "social", "info", "medium",
+    "Xác Minh Đồng Đang Hoạt Động",
+    "Bạn hiện đang ở cấp xác minh Đồng. Hoàn thành thêm giao dịch để tiến lên Bạc.",
+    200, false, "Xem Danh Tiếng", "/reputation"),
+
+  n("user-regular", "marketplace", "success", "medium",
+    "Giao Dịch Đầu Tiên Hoàn Thành",
+    "Chúc mừng bạn đã hoàn thành giao dịch đầu tiên! Bạn đã kiếm được thành tích 'Giao Dịch Đầu Tiên'.",
+    400, true),
+
+  n("user-regular", "rewards", "announcement", "medium",
+    "Phần Thưởng Đăng Nhập Hàng Ngày",
+    "Chào mừng trở lại! Phần thưởng đăng nhập hàng ngày: +50 XP đã được thêm vào tài khoản của bạn.",
+    600, true),
+
+  n("user-regular", "world_events", "info", "low",
+    "Chào Mừng Đến Football Universe",
+    "Bạn đã được đăng ký cho mùa giải hiện tại. Đội khởi đầu của bạn đang chờ thiết lập chiến thuật.",
+    800, true, "Thiết Lập Đội", "/"),
 ];
 
 // ── Realtime notification pool ─────────────────────────────────────────────
@@ -81,16 +238,16 @@ export type LiveNotifTemplate = {
 };
 
 export const liveNotifPool: LiveNotifTemplate[] = [
-  { category: "exchange", type: "success", priority: "medium", title: "Trade Offer Received", body: "A buyer has offered 2,400 UC for your Quantum Shard listing. Accept or counter within 24h.", actionLabel: "View Offer" },
-  { category: "safepass", type: "info", priority: "low", title: "Security Score Updated", body: "Your SafePass rating was recalculated. Check your Security Center for the latest breakdown." },
-  { category: "identity", type: "info", priority: "low", title: "Profile Viewed", body: "12 users viewed your reputation profile in the last 24 hours." },
-  { category: "football", type: "announcement", priority: "medium", title: "Match Starting Soon", body: "Your Football Universe match begins in 15 minutes. Confirm your starting lineup now.", actionLabel: "Set Lineup" },
-  { category: "animals", type: "success", priority: "low", title: "Breeding Complete", body: "Your breeding session has completed. Visit Animal Evolution to collect your new creature.", actionLabel: "Collect Now" },
-  { category: "worlds", type: "info", priority: "low", title: "World Activity Spike", body: "Nebula Nexus received 89 visitors in the last hour — a new record for this week." },
-  { category: "system", type: "warning", priority: "medium", title: "Storage Limit Approaching", body: "Your account is at 87% storage capacity. Consider archiving old data or upgrading your plan." },
-  { category: "exchange", type: "warning", priority: "high", title: "Price Alert Triggered", body: "Nebula Crystal dropped below your alert threshold of 3,000 UC. Current price: 2,870 UC.", actionLabel: "View Market" },
-  { category: "identity", type: "success", priority: "medium", title: "New Endorsement!", body: "A community member endorsed your marketplace reputation. Keep up the great work!" },
-  { category: "safepass", type: "warning", priority: "high", title: "New Device Login", body: "A new device signed into your account. If this wasn't you, review your active sessions now.", actionLabel: "Review Sessions" },
-  { category: "football", type: "success", priority: "low", title: "Match Result Available", body: "Your Football Universe match has ended. Tap to see the final score and player ratings." },
-  { category: "worlds", type: "success", priority: "low", title: "World Milestone: 1,000 Visitors", body: "Your world has been visited 1,000 times total. A new achievement has been unlocked!" },
+  { category: "marketplace", type: "success", priority: "medium", title: "Nhận Được Đề Nghị Mua", body: "Người mua đã đề nghị 2.400 UC cho danh sách Quantum Shard của bạn. Chấp nhận hoặc phản hồi trong vòng 24h.", actionLabel: "Xem Đề Nghị" },
+  { category: "security", type: "info", priority: "low", title: "Điểm Bảo Mật Cập Nhật", body: "Điểm SafePass của bạn vừa được tính lại. Kiểm tra Trung Tâm Bảo Mật để xem chi tiết mới nhất." },
+  { category: "social", type: "info", priority: "low", title: "Hồ Sơ Được Xem", body: "12 người dùng đã xem hồ sơ danh tiếng của bạn trong 24 giờ qua." },
+  { category: "world_events", type: "announcement", priority: "medium", title: "Trận Đấu Sắp Bắt Đầu", body: "Trận Football Universe của bạn bắt đầu sau 15 phút. Xác nhận đội hình xuất phát ngay.", actionLabel: "Chọn Đội Hình" },
+  { category: "rewards", type: "success", priority: "low", title: "Phần Thưởng Sẵn Sàng", body: "Phần thưởng hàng tuần của bạn đã sẵn sàng để nhận. Truy cập trang thành tích để nhận ngay.", actionLabel: "Nhận Ngay" },
+  { category: "world_events", type: "info", priority: "low", title: "Tăng Đột Biến Hoạt Động Thế Giới", body: "Nebula Nexus nhận được 89 du khách trong giờ qua — kỷ lục mới trong tuần này." },
+  { category: "system", type: "warning", priority: "medium", title: "Giới Hạn Lưu Trữ Sắp Đạt", body: "Tài khoản của bạn đang ở 87% dung lượng lưu trữ. Hãy cân nhắc lưu trữ dữ liệu cũ hoặc nâng cấp gói." },
+  { category: "marketplace", type: "warning", priority: "high", title: "Cảnh Báo Giá Kích Hoạt", body: "Nebula Crystal giảm xuống dưới ngưỡng cảnh báo 3.000 UC của bạn. Giá hiện tại: 2.870 UC.", actionLabel: "Xem Thị Trường" },
+  { category: "social", type: "success", priority: "medium", title: "Chứng Thực Mới!", body: "Một thành viên cộng đồng đã chứng thực danh tiếng chợ của bạn. Tiếp tục phát huy!" },
+  { category: "security", type: "warning", priority: "high", title: "Đăng Nhập Thiết Bị Mới", body: "Một thiết bị mới đã đăng nhập vào tài khoản của bạn. Nếu đây không phải bạn, hãy xem xét các phiên đang hoạt động ngay.", actionLabel: "Xem Phiên" },
+  { category: "rewards", type: "success", priority: "low", title: "Thành Tích Mở Khóa", body: "Chúc mừng! Thành tích 'Bản Đồ Thiên Hà' đã được mở khóa. Nhận +350 XP và huy hiệu đặc biệt.", actionLabel: "Xem Thành Tích" },
+  { category: "world_events", type: "success", priority: "low", title: "Cột Mốc Thế Giới: 1.000 Du Khách", body: "Thế giới của bạn đã được ghé thăm 1.000 lần tổng cộng! Một thành tích mới đã được mở khóa!" },
 ];

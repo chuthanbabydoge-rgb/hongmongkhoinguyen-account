@@ -1,101 +1,180 @@
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useMemo } from "react";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { AppShell } from "@/components/layout/AppShell";
 import { GlassCard } from "@/components/glass/GlassCard";
 import { useNotifications } from "@/hooks/useNotifications";
 import {
   Notification,
   NotificationCategory,
-  NotificationSettings,
   CATEGORY_META,
   PRIORITY_META,
+  TYPE_META,
 } from "@/lib/types/notification";
 import {
-  Bell,
-  BellOff,
-  Check,
-  CheckCheck,
-  Trash2,
-  Trash,
-  Settings2,
-  X,
-  Zap,
-  Volume2,
-  VolumeX,
-  Smartphone,
-  Moon,
-  ChevronRight,
-  Loader2,
-  Filter,
-  Clock,
+  Bell, BellOff, Check, CheckCheck, Trash2, Trash,
+  Search, Filter, ChevronRight, Loader2, Clock,
+  BarChart3, Inbox, TrendingUp, AlertCircle, X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useToast } from "@/hooks/use-toast";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Animation helpers ─────────────────────────────────────────────────────────
+
+const stagger: Variants = { hidden: {}, show: { transition: { staggerChildren: 0.04 } } };
+const pop: Variants = {
+  hidden: { opacity: 0, y: 12, scale: 0.97 },
+  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.28, ease: "easeOut" } },
+};
+const slideIn: Variants = {
+  hidden: { opacity: 0, x: -8 },
+  show: { opacity: 1, x: 0, transition: { duration: 0.22, ease: "easeOut" } },
+  exit: { opacity: 0, x: 8, scale: 0.97, transition: { duration: 0.18 } },
+};
 
 function timeAgo(iso: string) {
-  const ms = Date.now() - new Date(iso).getTime();
-  const s = Math.floor(ms / 1000);
-  if (s < 60) return "just now";
+  const s = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (s < 60) return "vừa xong";
   const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
+  if (m < 60) return `${m} phút trước`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
+  if (h < 24) return `${h} giờ trước`;
   const d = Math.floor(h / 24);
-  if (d < 30) return `${d}d ago`;
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (d < 30) return `${d} ngày trước`;
+  const mo = Math.floor(d / 30);
+  if (mo < 12) return `${mo} tháng trước`;
+  return `${Math.floor(mo / 12)} năm trước`;
 }
 
-const container = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.04 } },
-};
-const rowVariant = {
-  hidden: { opacity: 0, x: -8 },
-  show: { opacity: 1, x: 0, transition: { duration: 0.25 } },
-  exit: { opacity: 0, x: 16, scale: 0.97, transition: { duration: 0.18 } },
-};
+// ── Stats panel ───────────────────────────────────────────────────────────────
 
-// ── Live Toast ─────────────────────────────────────────────────────────────
+function StatsPanel({ notifications }: { notifications: Notification[] }) {
+  const total = notifications.length;
+  const unread = notifications.filter((n) => !n.isRead).length;
+  const read = total - unread;
+  const urgent = notifications.filter((n) => n.priority === "urgent").length;
 
-function LiveToast({ notif, onDismiss }: { notif: Notification; onDismiss: () => void }) {
-  const meta = CATEGORY_META[notif.category];
+  const catCounts = (Object.keys(CATEGORY_META) as NotificationCategory[]).map((cat) => {
+    const catNotifs = notifications.filter((n) => n.category === cat);
+    const catUnread = catNotifs.filter((n) => !n.isRead).length;
+    return { cat, total: catNotifs.length, unread: catUnread };
+  });
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: -16, scale: 0.97 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -12, scale: 0.97 }}
-      className={cn(
-        "fixed top-4 right-4 z-50 max-w-sm w-full rounded-2xl border p-4 shadow-2xl",
-        "bg-[#0a1628]/95 backdrop-blur-xl",
-        meta.border
-      )}
-    >
-      <div className="flex items-start gap-3">
-        <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 border", meta.bg, meta.border)}>
-          {meta.icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-0.5">
-            <span className={cn("text-[10px] font-semibold uppercase tracking-wider", meta.color)}>{meta.label}</span>
-            <Zap className="w-2.5 h-2.5 text-emerald-400" />
-            <span className="text-[10px] text-emerald-400 font-medium">Live</span>
+    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      {[
+        { label: "Tổng Thông Báo", val: total, icon: <Bell className="w-4 h-4 text-violet-400" />, color: "text-violet-300", bg: "bg-violet-500/10 border-violet-500/20" },
+        { label: "Chưa Đọc", val: unread, icon: <AlertCircle className="w-4 h-4 text-amber-400" />, color: "text-amber-300", bg: "bg-amber-500/10 border-amber-500/20" },
+        { label: "Đã Đọc", val: read, icon: <CheckCheck className="w-4 h-4 text-emerald-400" />, color: "text-emerald-300", bg: "bg-emerald-500/10 border-emerald-500/20" },
+        { label: "Khẩn Cấp", val: urgent, icon: <TrendingUp className="w-4 h-4 text-red-400" />, color: "text-red-300", bg: "bg-red-500/10 border-red-500/20" },
+      ].map((s) => (
+        <GlassCard key={s.label} className={cn("border", s.bg)}>
+          <div className="p-4 flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5 border border-white/8 shrink-0">
+              {s.icon}
+            </div>
+            <div>
+              <p className={cn("font-bold text-2xl leading-none tabular-nums", s.color)}>{val(s.val)}</p>
+              <p className="text-white/30 text-[10px] mt-0.5">{s.label}</p>
+            </div>
           </div>
-          <p className="text-white/90 text-sm font-semibold leading-snug">{notif.title}</p>
-          <p className="text-white/45 text-xs mt-0.5 line-clamp-2">{notif.body}</p>
+        </GlassCard>
+      ))}
+
+      {/* Category breakdown */}
+      <GlassCard className="col-span-2 sm:col-span-4">
+        <div className="p-4">
+          <div className="flex items-center gap-1.5 mb-3">
+            <BarChart3 className="w-4 h-4 text-white/35" />
+            <span className="text-white/40 text-xs uppercase tracking-wider">Phân Bổ Theo Danh Mục</span>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5">
+            {catCounts.map(({ cat, total: ct, unread: cu }) => {
+              const m = CATEGORY_META[cat];
+              const pct = total > 0 ? (ct / total) * 100 : 0;
+              return (
+                <div key={cat} className={cn("rounded-xl p-3 border space-y-2", m.bg, m.border)}>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xl">{m.icon}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn("text-[10px] font-bold leading-tight truncate", m.color)}>{m.label}</p>
+                      {cu > 0 && (
+                        <p className="text-[9px] text-white/35">{cu} chưa đọc</p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="h-1.5 rounded-full bg-black/20 overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${pct}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut", delay: 0.15 }}
+                      className={cn("h-full rounded-full", m.color.replace("text-", "bg-"))} />
+                  </div>
+                  <p className={cn("text-[9px] font-bold", m.color)}>{ct} thông báo</p>
+                </div>
+              );
+            })}
+          </div>
         </div>
-        <button onClick={onDismiss} className="text-white/25 hover:text-white/60 transition-colors shrink-0">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </motion.div>
+      </GlassCard>
+    </div>
   );
 }
 
-// ── Notification Row ──────────────────────────────────────────────────────────
+function val(n: number) {
+  return n.toLocaleString("vi-VN");
+}
 
-function NotifRow({
+// ── Category tabs ─────────────────────────────────────────────────────────────
+
+function CategoryTabs({
+  selected,
+  onChange,
+  notifications,
+}: {
+  selected: NotificationCategory | "all";
+  onChange: (c: NotificationCategory | "all") => void;
+  notifications: Notification[];
+}) {
+  const cats: (NotificationCategory | "all")[] = [
+    "all", "system", "security", "marketplace", "rewards", "social", "world_events",
+  ];
+
+  return (
+    <div className="flex gap-1.5 overflow-x-auto pb-0.5 scrollbar-none flex-wrap">
+      {cats.map((cat) => {
+        const isAll = cat === "all";
+        const meta = isAll ? null : CATEGORY_META[cat as NotificationCategory];
+        const catNotifs = isAll ? notifications : notifications.filter((n) => n.category === cat);
+        const unread = catNotifs.filter((n) => !n.isRead).length;
+        const active = selected === cat;
+
+        return (
+          <button key={cat} onClick={() => onChange(cat)}
+            className={cn(
+              "flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold border whitespace-nowrap transition-all shrink-0",
+              active
+                ? isAll
+                  ? "bg-violet-600/25 border-violet-500/40 text-violet-200 shadow-[0_0_10px_rgba(124,58,237,0.15)]"
+                  : `${meta!.bg} ${meta!.border} ${meta!.color}`
+                : "bg-white/4 border-white/10 text-white/35 hover:text-white/65 hover:bg-white/7"
+            )}>
+            <span className="text-base leading-none">{isAll ? "🔔" : meta!.icon}</span>
+            <span>{isAll ? "Tất Cả" : meta!.label}</span>
+            {unread > 0 && (
+              <span className={cn(
+                "text-[9px] px-1.5 py-0.5 rounded-full font-bold tabular-nums min-w-[18px] text-center",
+                active ? "bg-red-500/30 text-red-200" : "bg-red-500/20 text-red-300"
+              )}>
+                {unread}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Notification card ─────────────────────────────────────────────────────────
+
+function NotifCard({
   notif,
   onMarkRead,
   onDelete,
@@ -104,651 +183,414 @@ function NotifRow({
   onMarkRead: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const [hovered, setHovered] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  const meta = CATEGORY_META[notif.category];
-  const priority = PRIORITY_META[notif.priority];
+  const catM = CATEGORY_META[notif.category];
+  const prioM = PRIORITY_META[notif.priority];
+  const typeM = TYPE_META[notif.type];
+  const isUnread = !notif.isRead;
 
   return (
     <motion.div
       layout
-      variants={rowVariant}
+      variants={slideIn}
       initial="hidden"
       animate="show"
       exit="exit"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={cn(
-        "rounded-xl border transition-all group",
-        notif.isRead
-          ? "bg-white/2 border-white/6"
-          : `bg-gradient-to-r ${meta.gradient} ${meta.border} shadow-sm`
+        "relative rounded-2xl border overflow-hidden transition-all group",
+        isUnread
+          ? `bg-gradient-to-r ${catM.gradient} ${catM.border}`
+          : "bg-white/2 border-white/8 hover:bg-white/3 hover:border-white/12"
       )}
     >
-      <div
-        className="flex items-start gap-3 p-4 cursor-pointer"
-        onClick={() => {
-          setExpanded((v) => !v);
-          if (!notif.isRead) onMarkRead(notif.id);
-        }}
-      >
-        {/* Category icon */}
+      {/* Unread left accent */}
+      {isUnread && (
         <div className={cn(
-          "w-9 h-9 rounded-xl flex items-center justify-center text-base shrink-0 border transition-all",
-          notif.isRead ? "bg-white/5 border-white/10 opacity-60" : `${meta.bg} ${meta.border}`
-        )}>
-          {meta.icon}
-        </div>
+          "absolute left-0 top-0 bottom-0 w-0.5 rounded-l-2xl",
+          notif.priority === "urgent" ? "bg-red-400" :
+          notif.priority === "high" ? "bg-orange-400" :
+          catM.color.replace("text-", "bg-")
+        )} />
+      )}
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 space-y-0.5">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className={cn("text-[9px] font-bold uppercase tracking-widest", notif.isRead ? "text-white/25" : meta.color)}>
-              {meta.label}
-            </span>
-            <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", priority.dot, priority.ring)} />
-            {!notif.isRead && (
-              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0 shadow-[0_0_4px_rgba(124,58,237,0.8)]" />
+      <div className="p-4 pl-5">
+        <div className="flex items-start gap-3">
+          {/* Icon */}
+          <div className={cn(
+            "w-11 h-11 rounded-xl flex items-center justify-center text-xl border shrink-0 relative",
+            catM.bg, catM.border
+          )}>
+            {catM.icon}
+            {/* Priority dot */}
+            {isUnread && notif.priority !== "low" && (
+              <div className={cn(
+                "absolute -top-1 -right-1 w-3 h-3 rounded-full border-2 border-[#050c1a]",
+                prioM.dot
+              )} />
             )}
           </div>
-          <p className={cn("text-sm font-semibold leading-snug", notif.isRead ? "text-white/50" : "text-white/90")}>
-            {notif.title}
-          </p>
-          <p className={cn("text-xs leading-relaxed", notif.isRead ? "text-white/25" : "text-white/45", expanded ? "" : "line-clamp-1")}>
-            {notif.body}
-          </p>
-        </div>
 
-        {/* Meta + actions */}
-        <div className="flex flex-col items-end gap-2 shrink-0 ml-1">
-          <span className="text-white/20 text-[10px] whitespace-nowrap">{timeAgo(notif.createdAt)}</span>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            {!notif.isRead && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onMarkRead(notif.id); }}
-                title="Mark as read"
-                className="w-6 h-6 rounded-md bg-white/5 hover:bg-emerald-500/20 flex items-center justify-center transition-all"
-              >
-                <Check className="w-3 h-3 text-white/40 hover:text-emerald-400" />
-              </button>
-            )}
-            <button
-              onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
-              title="Delete"
-              className="w-6 h-6 rounded-md bg-white/5 hover:bg-red-500/20 flex items-center justify-center transition-all"
-            >
-              <Trash2 className="w-3 h-3 text-white/40 hover:text-red-400" />
-            </button>
-          </div>
-          <ChevronRight className={cn("w-3 h-3 text-white/15 transition-transform", expanded && "rotate-90")} />
-        </div>
-      </div>
+          {/* Content */}
+          <div className="flex-1 min-w-0 space-y-1">
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                  <span className={cn("text-[9px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded-md border", catM.bg, catM.border, catM.color)}>
+                    {catM.icon} {catM.label}
+                  </span>
+                  {notif.priority !== "low" && (
+                    <span className={cn("text-[9px] font-bold px-1.5 py-0.5 rounded-md", prioM.badge)}>
+                      {prioM.label}
+                    </span>
+                  )}
+                  <span className="text-[9px] text-white/25">{typeM.icon} {typeM.label}</span>
+                </div>
+                <p className={cn(
+                  "text-sm font-bold leading-tight",
+                  isUnread ? "text-white" : "text-white/60"
+                )}>
+                  {notif.title}
+                </p>
+              </div>
 
-      {/* Expanded action */}
-      <AnimatePresence>
-        {expanded && notif.actionLabel && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-0 border-t border-white/6">
-              <button className={cn(
-                "mt-3 flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border",
-                meta.bg, meta.border, meta.text,
-                "hover:brightness-125"
-              )}>
-                {notif.actionLabel}
-                <ChevronRight className="w-3 h-3" />
-              </button>
+              {/* Timestamp + actions */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                <span className="text-white/25 text-[10px] whitespace-nowrap flex items-center gap-0.5">
+                  <Clock className="w-2.5 h-2.5" />
+                  {timeAgo(notif.createdAt)}
+                </span>
+                <AnimatePresence>
+                  {hovered && (
+                    <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
+                      className="flex items-center gap-1">
+                      {isUnread && (
+                        <button onClick={(e) => { e.stopPropagation(); onMarkRead(notif.id); }}
+                          title="Đánh dấu đã đọc"
+                          className="w-6 h-6 rounded-lg flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25 transition-all">
+                          <Check className="w-3 h-3" />
+                        </button>
+                      )}
+                      <button onClick={(e) => { e.stopPropagation(); onDelete(notif.id); }}
+                        title="Xóa thông báo"
+                        className="w-6 h-6 rounded-lg flex items-center justify-center bg-red-500/12 border border-red-500/25 text-red-400 hover:bg-red-500/22 transition-all">
+                        <X className="w-3 h-3" />
+                      </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
-  );
-}
 
-// ── Category Sidebar ──────────────────────────────────────────────────────────
-
-function CategorySidebar({
-  notifications,
-  selected,
-  onChange,
-  onMarkCategoryRead,
-}: {
-  notifications: Notification[];
-  selected: NotificationCategory | "all";
-  onChange: (c: NotificationCategory | "all") => void;
-  onMarkCategoryRead: (c: NotificationCategory) => void;
-}) {
-  const allUnread = notifications.filter((n) => !n.isRead).length;
-  const cats: (NotificationCategory | "all")[] = [
-    "all", "system", "identity", "safepass", "football", "animals", "worlds", "exchange",
-  ];
-
-  return (
-    <div className="space-y-1">
-      {cats.map((cat) => {
-        const isAll = cat === "all";
-        const meta = isAll ? null : CATEGORY_META[cat];
-        const unread = isAll
-          ? allUnread
-          : notifications.filter((n) => n.category === cat && !n.isRead).length;
-        const total = isAll
-          ? notifications.length
-          : notifications.filter((n) => n.category === cat).length;
-        const isActive = selected === cat;
-
-        return (
-          <div key={cat} className="group/cat relative">
-            <button
-              onClick={() => onChange(cat)}
+            {/* Body */}
+            <p
+              onClick={() => setExpanded((v) => !v)}
               className={cn(
-                "w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-left transition-all",
-                isActive
-                  ? isAll
-                    ? "bg-violet-600/20 border border-violet-500/30 text-violet-200"
-                    : `${meta!.bg} border ${meta!.border} ${meta!.text}`
-                  : "hover:bg-white/5 border border-transparent text-white/40 hover:text-white/70"
+                "text-xs leading-relaxed cursor-pointer transition-all",
+                isUnread ? "text-white/55" : "text-white/30",
+                !expanded && "line-clamp-2"
               )}
             >
-              <span className="text-base shrink-0">{isAll ? "🔔" : meta!.icon}</span>
-              <span className="text-xs font-medium flex-1 truncate">
-                {isAll ? "All Notifications" : meta!.label}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                {unread > 0 && (
-                  <span className={cn(
-                    "text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-4 text-center",
-                    isAll ? "bg-violet-500/40 text-violet-200" : `${meta!.bg} ${meta!.color}`
+              {notif.body}
+            </p>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-0.5 flex-wrap gap-2">
+              <button onClick={() => setExpanded((v) => !v)}
+                className="flex items-center gap-1 text-[10px] text-white/25 hover:text-white/50 transition-colors">
+                <ChevronRight className={cn("w-3 h-3 transition-transform", expanded && "rotate-90")} />
+                {expanded ? "Thu gọn" : "Xem thêm"}
+              </button>
+
+              <div className="flex items-center gap-2">
+                {notif.actionLabel && (
+                  <button className={cn(
+                    "flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-semibold border transition-all",
+                    catM.bg, catM.border, catM.color, "hover:brightness-125"
                   )}>
-                    {unread}
+                    {notif.actionLabel} <ChevronRight className="w-2.5 h-2.5" />
+                  </button>
+                )}
+                {!isUnread && notif.readAt && (
+                  <span className="text-[9px] text-white/15 flex items-center gap-0.5">
+                    <CheckCheck className="w-2.5 h-2.5" /> {timeAgo(notif.readAt)}
                   </span>
                 )}
-                <span className="text-[9px] text-white/20">{total}</span>
               </div>
-            </button>
-            {!isAll && unread > 0 && isActive && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onMarkCategoryRead(cat); }}
-                title="Mark all in category as read"
-                className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover/cat:opacity-100 transition-opacity w-5 h-5 rounded-md bg-white/10 flex items-center justify-center"
-              >
-                <CheckCheck className="w-3 h-3 text-white/50" />
-              </button>
-            )}
+            </div>
           </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ── Settings Panel ────────────────────────────────────────────────────────────
-
-function SettingsPanel({
-  settings,
-  onSave,
-  onClose,
-}: {
-  settings: NotificationSettings;
-  onSave: (s: NotificationSettings) => void;
-  onClose: () => void;
-}) {
-  const [local, setLocal] = useState<NotificationSettings>(settings);
-  const cats = Object.keys(CATEGORY_META) as NotificationCategory[];
-
-  const toggle = (path: string[]) => {
-    setLocal((prev) => {
-      const next = JSON.parse(JSON.stringify(prev)) as NotificationSettings;
-      if (path.length === 1) {
-        const k = path[0] as keyof NotificationSettings;
-        (next[k] as boolean) = !(next[k] as boolean);
-      } else {
-        const cat = path[0] as NotificationCategory;
-        const key = path[1] as "enabled" | "push" | "sound";
-        next.categories[cat][key] = !next.categories[cat][key];
-      }
-      return next;
-    });
-  };
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: 24 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 24 }}
-      className="space-y-4"
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Settings2 className="w-4 h-4 text-white/40" />
-          <p className="text-white/60 text-xs font-medium uppercase tracking-widest">Notification Settings</p>
         </div>
-        <button onClick={onClose} className="text-white/30 hover:text-white/60 transition-colors">
-          <X className="w-4 h-4" />
-        </button>
       </div>
-
-      {/* Global toggles */}
-      <GlassCard>
-        <div className="p-4 space-y-3">
-          <p className="text-white/30 text-[10px] uppercase tracking-widest">Global</p>
-          {[
-            { key: "globalSound", icon: <Volume2 className="w-4 h-4" />, label: "Notification Sounds" },
-            { key: "globalPush", icon: <Smartphone className="w-4 h-4" />, label: "Push Notifications" },
-            { key: "doNotDisturb", icon: <Moon className="w-4 h-4" />, label: "Do Not Disturb" },
-          ].map((item) => {
-            const val = local[item.key as keyof NotificationSettings] as boolean;
-            return (
-              <div key={item.key} className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5 text-white/50">
-                  {item.icon}
-                  <span className="text-sm">{item.label}</span>
-                </div>
-                <button
-                  onClick={() => toggle([item.key])}
-                  className={cn(
-                    "w-10 h-5 rounded-full transition-all relative",
-                    val ? "bg-violet-600" : "bg-white/10"
-                  )}
-                >
-                  <div className={cn("absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all", val ? "left-5.5" : "left-0.5")} />
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </GlassCard>
-
-      {/* Per-category */}
-      <GlassCard>
-        <div className="p-4 space-y-3">
-          <p className="text-white/30 text-[10px] uppercase tracking-widest">Per Category</p>
-          <div className="grid grid-cols-3 gap-1 text-[9px] text-white/25 uppercase tracking-wider pb-1 border-b border-white/6">
-            <span>Category</span>
-            <span className="text-center">Enabled</span>
-            <span className="text-center">Sound</span>
-          </div>
-          {cats.map((cat) => {
-            const meta = CATEGORY_META[cat];
-            const catSettings = local.categories[cat];
-            return (
-              <div key={cat} className="grid grid-cols-3 gap-1 items-center">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-sm shrink-0">{meta.icon}</span>
-                  <span className="text-xs text-white/50 truncate">{meta.label}</span>
-                </div>
-                {(["enabled", "sound"] as const).map((key) => {
-                  const val = catSettings[key];
-                  return (
-                    <div key={key} className="flex justify-center">
-                      <button
-                        onClick={() => toggle([cat, key])}
-                        className={cn(
-                          "w-8 h-4 rounded-full transition-all relative",
-                          val ? "bg-violet-600/70" : "bg-white/8"
-                        )}
-                      >
-                        <div className={cn("absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all", val ? "left-4" : "left-0.5")} />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      </GlassCard>
-
-      <button
-        onClick={() => { onSave(local); onClose(); }}
-        className="w-full py-2.5 rounded-xl bg-violet-600/30 border border-violet-500/40 text-violet-200 text-sm font-semibold hover:bg-violet-600/50 transition-all"
-      >
-        Save Settings
-      </button>
     </motion.div>
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────────────────
 
-type SortMode = "newest" | "unread" | "priority";
+type ReadFilter = "all" | "unread" | "read";
 
 export default function NotificationsPage() {
-  const { toast } = useToast();
   const {
     notifications,
-    settings,
     unreadCount,
     isLoading,
     liveToast,
     markRead,
     markAllRead,
-    markCategoryRead,
     deleteNotification,
-    deleteAll,
-    saveSettings,
   } = useNotifications();
 
   const [category, setCategory] = useState<NotificationCategory | "all">("all");
-  const [sort, setSort] = useState<SortMode>("newest");
-  const [showSettings, setShowSettings] = useState(false);
-  const [showUnreadOnly, setShowUnreadOnly] = useState(false);
-  const [liveToastVisible, setLiveToastVisible] = useState<Notification | null>(null);
+  const [readFilter, setReadFilter] = useState<ReadFilter>("all");
+  const [search, setSearch] = useState("");
+  const [priorityFilter, setPriorityFilter] = useState<"all" | "urgent" | "high" | "medium" | "low">("all");
+  const [showStats, setShowStats] = useState(true);
 
-  useEffect(() => {
-    if (liveToast) setLiveToastVisible(liveToast);
-  }, [liveToast]);
-
-  const handleMarkAllRead = async () => {
-    await markAllRead();
-    toast({ title: "All notifications marked as read" });
-  };
-
-  const handleDeleteAll = async () => {
-    await deleteAll();
-    toast({ title: "All notifications cleared" });
-  };
-
-  const priorityOrder: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
-
-  const filtered = notifications
-    .filter((n) => category === "all" || n.category === category)
-    .filter((n) => !showUnreadOnly || !n.isRead)
-    .sort((a, b) => {
-      if (sort === "unread") return a.isRead === b.isRead ? 0 : a.isRead ? 1 : -1;
-      if (sort === "priority") return (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3);
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  const filtered = useMemo(() => {
+    return notifications.filter((n) => {
+      if (category !== "all" && n.category !== category) return false;
+      if (priorityFilter !== "all" && n.priority !== priorityFilter) return false;
+      if (readFilter === "unread" && n.isRead) return false;
+      if (readFilter === "read" && !n.isRead) return false;
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!n.title.toLowerCase().includes(q) && !n.body.toLowerCase().includes(q)) return false;
+      }
+      return true;
     });
-
-  const categoryUnread = (cat: NotificationCategory | "all") =>
-    cat === "all"
-      ? unreadCount
-      : notifications.filter((n) => n.category === cat && !n.isRead).length;
+  }, [notifications, category, priorityFilter, readFilter, search]);
 
   if (isLoading) {
     return (
-      <AppShell title="Notifications" subtitle="Stay updated across all your universes">
-        <div className="flex-1 flex items-center justify-center py-24">
-          <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+      <AppShell title="Trung Tâm Thông Báo" subtitle="Quản lý tất cả thông báo của bạn">
+        <div className="flex-1 flex items-center justify-center py-32">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-violet-400" />
+            <p className="text-white/30 text-sm">Đang tải thông báo...</p>
+          </div>
         </div>
       </AppShell>
     );
   }
 
+  const readOptions: { key: ReadFilter; label: string; icon: React.ReactNode }[] = [
+    { key: "all", label: "Tất Cả", icon: <Filter className="w-3 h-3" /> },
+    { key: "unread", label: "Chưa Đọc", icon: <Bell className="w-3 h-3" /> },
+    { key: "read", label: "Đã Đọc", icon: <BellOff className="w-3 h-3" /> },
+  ];
+
   return (
-    <AppShell title="Notifications" subtitle="Stay updated across all your universes">
+    <AppShell title="Trung Tâm Thông Báo" subtitle="Theo dõi mọi hoạt động và cập nhật trong Universe của bạn">
       {/* Live toast */}
       <AnimatePresence>
-        {liveToastVisible && (
-          <LiveToast
-            notif={liveToastVisible}
-            onDismiss={() => setLiveToastVisible(null)}
-          />
+        {liveToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -14, scale: 0.94 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.96 }}
+            className="fixed top-4 right-4 z-50 max-w-sm w-full"
+          >
+            <GlassCard className="border-violet-500/30 shadow-[0_0_30px_rgba(124,58,237,0.25)]">
+              <div className="p-3 flex items-start gap-3">
+                <div className={cn("w-9 h-9 rounded-xl flex items-center justify-center text-lg border shrink-0",
+                  CATEGORY_META[liveToast.category].bg, CATEGORY_META[liveToast.category].border)}>
+                  {CATEGORY_META[liveToast.category].icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-white font-semibold text-xs">{liveToast.title}</p>
+                  <p className="text-white/45 text-[10px] line-clamp-2 mt-0.5">{liveToast.body}</p>
+                </div>
+                <div className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse mt-1 shrink-0" />
+              </div>
+            </GlassCard>
+          </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="p-4 sm:p-6 max-w-7xl">
-        {/* ── Header bar ── */}
-        <div className="flex items-center justify-between gap-3 flex-wrap mb-5">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2">
-              <Bell className="w-5 h-5 text-violet-400" />
-              {unreadCount > 0 && (
-                <span className="px-2 py-0.5 rounded-full bg-violet-600/30 border border-violet-500/40 text-violet-200 text-xs font-bold">
-                  {unreadCount} unread
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-              <Zap className="w-3 h-3 text-emerald-400" />
-              <span className="text-emerald-300 text-[10px] font-semibold">Live</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowUnreadOnly((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                showUnreadOnly
-                  ? "bg-violet-600/20 border-violet-500/30 text-violet-200"
-                  : "bg-white/5 border-white/10 text-white/40 hover:text-white/70"
-              )}
-            >
-              <Filter className="w-3 h-3" />
-              Unread only
-            </button>
-            {unreadCount > 0 && (
-              <button
-                onClick={handleMarkAllRead}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-white/50 hover:text-white text-xs transition-all"
-              >
-                <CheckCheck className="w-3 h-3" />
-                Mark all read
-              </button>
-            )}
-            {notifications.length > 0 && (
-              <button
-                onClick={handleDeleteAll}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/25 text-white/40 hover:text-red-400 text-xs transition-all"
-              >
-                <Trash className="w-3 h-3" />
-                Clear all
-              </button>
-            )}
-            <button
-              onClick={() => setShowSettings((v) => !v)}
-              className={cn(
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all",
-                showSettings
-                  ? "bg-violet-600/20 border-violet-500/30 text-violet-200"
-                  : "bg-white/5 border-white/10 text-white/40 hover:text-white/70"
-              )}
-            >
-              <Settings2 className="w-3 h-3" />
-              Settings
-            </button>
-          </div>
-        </div>
+      <div className="p-4 sm:p-6 max-w-6xl space-y-5">
+        <motion.div variants={stagger} initial="hidden" animate="show" className="space-y-5">
 
-        <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] xl:grid-cols-[240px_1fr_280px] gap-5">
-          {/* ── Category sidebar ── */}
-          <div className="space-y-2">
-            <GlassCard>
-              <div className="p-3">
-                <CategorySidebar
-                  notifications={notifications}
-                  selected={category}
-                  onChange={setCategory}
-                  onMarkCategoryRead={markCategoryRead}
-                />
-              </div>
-            </GlassCard>
-
-            {/* Sort */}
-            <GlassCard>
-              <div className="p-3 space-y-1">
-                <p className="text-white/25 text-[9px] uppercase tracking-widest px-1 mb-2">Sort by</p>
-                {([
-                  { key: "newest", label: "Newest first", icon: <Clock className="w-3.5 h-3.5" /> },
-                  { key: "unread", label: "Unread first", icon: <Bell className="w-3.5 h-3.5" /> },
-                  { key: "priority", label: "By priority", icon: <Zap className="w-3.5 h-3.5" /> },
-                ] as { key: SortMode; label: string; icon: React.ReactNode }[]).map((s) => (
-                  <button
-                    key={s.key}
-                    onClick={() => setSort(s.key)}
-                    className={cn(
-                      "w-full flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs transition-all text-left",
-                      sort === s.key
-                        ? "bg-violet-600/20 text-violet-200 border border-violet-500/25"
-                        : "text-white/35 hover:text-white/60 hover:bg-white/5"
+          {/* ── Hero header ──────────────────────────────────────── */}
+          <motion.div variants={pop}>
+            <GlassCard className="border-violet-500/20 overflow-hidden">
+              <div className="h-0.5 bg-gradient-to-r from-violet-500 via-cyan-400 to-violet-500" />
+              <div className="p-4 sm:p-5 flex items-center justify-between flex-wrap gap-3">
+                <div className="flex items-center gap-4">
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-600 to-blue-600 flex items-center justify-center shadow-[0_0_24px_rgba(124,58,237,0.35)]">
+                      <Bell className="w-7 h-7 text-white" />
+                    </div>
+                    {unreadCount > 0 && (
+                      <div className="absolute -top-1.5 -right-1.5 min-w-[22px] h-5 rounded-full bg-red-500 border-2 border-[#050c1a] flex items-center justify-center px-1">
+                        <span className="text-white text-[10px] font-black tabular-nums">{unreadCount > 99 ? "99+" : unreadCount}</span>
+                      </div>
                     )}
-                  >
-                    {s.icon}
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-            </GlassCard>
-          </div>
-
-          {/* ── Main feed ── */}
-          <div className="space-y-2.5 min-w-0">
-            {/* Category header */}
-            {category !== "all" && (
-              <div className={cn(
-                "flex items-center justify-between px-4 py-2.5 rounded-xl border",
-                CATEGORY_META[category].bg, CATEGORY_META[category].border
-              )}>
-                <div className="flex items-center gap-2.5">
-                  <span className="text-xl">{CATEGORY_META[category].icon}</span>
+                  </div>
                   <div>
-                    <p className={cn("text-sm font-semibold", CATEGORY_META[category].color)}>{CATEGORY_META[category].label}</p>
-                    <p className="text-white/30 text-[10px]">{filtered.length} notifications · {categoryUnread(category)} unread</p>
+                    <h1 className="text-white font-bold text-lg">Trung Tâm Thông Báo</h1>
+                    <p className="text-white/35 text-xs mt-0.5">
+                      {unreadCount > 0
+                        ? <span className="text-amber-300 font-semibold">{unreadCount} thông báo chưa đọc</span>
+                        : <span className="text-emerald-300">Tất cả đã đọc ✓</span>}
+                      <span className="text-white/20"> · {notifications.length} tổng thông báo</span>
+                    </p>
                   </div>
                 </div>
-                {categoryUnread(category) > 0 && (
-                  <button
-                    onClick={() => markCategoryRead(category)}
-                    className="flex items-center gap-1 text-xs text-white/40 hover:text-white/70 transition-colors"
-                  >
-                    <CheckCheck className="w-3.5 h-3.5" />
-                    Mark read
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => setShowStats((v) => !v)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium border transition-all",
+                      showStats ? "bg-violet-600/20 border-violet-500/35 text-violet-300" : "bg-white/5 border-white/10 text-white/40 hover:text-white/65"
+                    )}>
+                    <BarChart3 className="w-3.5 h-3.5" /> Thống Kê
+                  </button>
+                  {unreadCount > 0 && (
+                    <button onClick={() => markAllRead()}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border bg-emerald-500/12 border-emerald-500/30 text-emerald-300 hover:bg-emerald-500/22 transition-all">
+                      <CheckCheck className="w-3.5 h-3.5" /> Đọc Tất Cả
+                    </button>
+                  )}
+                </div>
+              </div>
+            </GlassCard>
+          </motion.div>
+
+          {/* ── Stats ────────────────────────────────────────────── */}
+          <AnimatePresence>
+            {showStats && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <motion.div variants={pop}>
+                  <StatsPanel notifications={notifications} />
+                </motion.div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* ── Section header ────────────────────────────────────── */}
+          <motion.div variants={pop} className="flex items-center gap-3">
+            <Bell className="w-5 h-5 text-violet-400" />
+            <h2 className="text-white font-bold text-lg">Danh Sách Thông Báo</h2>
+            <div className="flex-1 h-px bg-white/8" />
+          </motion.div>
+
+          {/* ── Category tabs ─────────────────────────────────────── */}
+          <motion.div variants={pop}>
+            <CategoryTabs
+              selected={category}
+              onChange={setCategory}
+              notifications={notifications}
+            />
+          </motion.div>
+
+          {/* ── Search + Filters ──────────────────────────────────── */}
+          <motion.div variants={pop}>
+            <div className="flex items-center gap-2 flex-wrap">
+              {/* Search */}
+              <div className="relative flex-1 min-w-44">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/25" />
+                <input
+                  type="text"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Tìm kiếm thông báo..."
+                  className="w-full pl-8 pr-4 py-2 rounded-xl bg-white/5 border border-white/10 text-white/70 placeholder:text-white/20 text-sm focus:outline-none focus:border-violet-500/40 focus:bg-white/8 transition-all"
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/55">
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 )}
               </div>
-            )}
 
-            {/* Feed */}
-            {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 text-center">
-                <BellOff className="w-10 h-10 text-white/10 mb-3" />
-                <p className="text-white/30 text-sm font-medium">No notifications</p>
-                <p className="text-white/15 text-xs mt-1">
-                  {showUnreadOnly ? "No unread notifications in this category" : "You're all caught up!"}
-                </p>
+              {/* Read filter */}
+              <div className="flex gap-1 p-1 rounded-xl bg-white/4 border border-white/8">
+                {readOptions.map((o) => (
+                  <button key={o.key} onClick={() => setReadFilter(o.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                      readFilter === o.key ? "bg-white/12 text-white border border-white/15" : "text-white/30 hover:text-white/55"
+                    )}>
+                    {o.icon} {o.label}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate="show"
-                className="space-y-2"
-              >
-                <AnimatePresence mode="popLayout">
-                  {filtered.map((notif) => (
-                    <NotifRow
-                      key={notif.id}
-                      notif={notif}
-                      onMarkRead={markRead}
-                      onDelete={deleteNotification}
-                    />
-                  ))}
-                </AnimatePresence>
-              </motion.div>
-            )}
-          </div>
 
-          {/* ── Settings panel (xl only) or inline on smaller ── */}
-          <div className="hidden xl:block">
-            <AnimatePresence mode="wait">
-              {showSettings && settings ? (
-                <SettingsPanel
-                  key="settings"
-                  settings={settings}
-                  onSave={async (s) => {
-                    await saveSettings(s);
-                    toast({ title: "Settings saved" });
-                  }}
-                  onClose={() => setShowSettings(false)}
-                />
-              ) : (
-                <motion.div
-                  key="stats"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="space-y-4"
-                >
-                  {/* Quick stats */}
-                  <GlassCard>
-                    <div className="p-4 space-y-3">
-                      <p className="text-white/30 text-[10px] uppercase tracking-widest">Overview</p>
-                      {[
-                        { label: "Total", value: notifications.length, color: "text-white" },
-                        { label: "Unread", value: unreadCount, color: "text-violet-300" },
-                        { label: "Read", value: notifications.filter((n) => n.isRead).length, color: "text-white/40" },
-                      ].map((s) => (
-                        <div key={s.label} className="flex items-center justify-between">
-                          <span className="text-white/40 text-xs">{s.label}</span>
-                          <span className={cn("text-sm font-bold tabular-nums", s.color)}>{s.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </GlassCard>
+              {/* Priority filter */}
+              <div className="flex gap-1 p-1 rounded-xl bg-white/4 border border-white/8">
+                {(["all", "urgent", "high", "medium", "low"] as const).map((p) => {
+                  const m = p !== "all" ? PRIORITY_META[p] : null;
+                  return (
+                    <button key={p} onClick={() => setPriorityFilter(p)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium transition-all whitespace-nowrap",
+                        priorityFilter === p ? "bg-white/12 text-white border border-white/15" : "text-white/30 hover:text-white/55"
+                      )}>
+                      {p !== "all" && <div className={cn("w-2 h-2 rounded-full", m!.dot.replace(" animate-pulse", ""))} />}
+                      {p === "all" ? "Mọi Ưu Tiên" : m!.label}
+                    </button>
+                  );
+                })}
+              </div>
 
-                  {/* Category breakdown */}
-                  <GlassCard>
-                    <div className="p-4 space-y-2">
-                      <p className="text-white/30 text-[10px] uppercase tracking-widest mb-3">By Category</p>
-                      {(Object.keys(CATEGORY_META) as NotificationCategory[]).map((cat) => {
-                        const total = notifications.filter((n) => n.category === cat).length;
-                        const unread = notifications.filter((n) => n.category === cat && !n.isRead).length;
-                        if (total === 0) return null;
-                        const meta = CATEGORY_META[cat];
-                        return (
-                          <div key={cat} className="flex items-center gap-2">
-                            <span className="text-sm shrink-0">{meta.icon}</span>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between mb-0.5">
-                                <span className="text-white/45 text-[10px] truncate">{meta.label}</span>
-                                <span className="text-white/30 text-[10px]">{total}</span>
-                              </div>
-                              <div className="h-1 rounded-full bg-white/6 overflow-hidden">
-                                <div
-                                  className={cn("h-full rounded-full", meta.bg.replace("/10", "/60"))}
-                                  style={{ width: `${notifications.length > 0 ? (total / notifications.length) * 100 : 0}%` }}
-                                />
-                              </div>
-                            </div>
-                            {unread > 0 && (
-                              <span className={cn("text-[9px] font-bold px-1 rounded shrink-0", meta.color)}>{unread}</span>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </GlassCard>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Settings toggle button when panel is not shown */}
-            {!showSettings && (
-              <button
-                onClick={() => setShowSettings(true)}
-                className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-white/5 hover:bg-white/8 border border-white/8 text-white/35 hover:text-white/60 text-xs transition-all"
-              >
-                <Settings2 className="w-3.5 h-3.5" />
-                Notification Settings
-              </button>
-            )}
-          </div>
-
-          {/* Settings panel for smaller screens — full width below */}
-          {showSettings && settings && (
-            <div className="xl:hidden col-span-full">
-              <SettingsPanel
-                settings={settings}
-                onSave={async (s) => {
-                  await saveSettings(s);
-                  toast({ title: "Settings saved" });
-                }}
-                onClose={() => setShowSettings(false)}
-              />
+              <span className="text-white/20 text-xs whitespace-nowrap">{filtered.length} thông báo</span>
             </div>
+          </motion.div>
+
+          {/* ── Notification list ─────────────────────────────────── */}
+          {filtered.length === 0 ? (
+            <motion.div variants={pop} className="flex flex-col items-center justify-center py-24 text-center">
+              <Inbox className="w-14 h-14 text-white/8 mb-4" />
+              <p className="text-white/30 text-sm font-medium">Không có thông báo</p>
+              <p className="text-white/15 text-xs mt-1">
+                {search ? "Thử thay đổi từ khóa tìm kiếm" : "Không có thông báo nào khớp với bộ lọc"}
+              </p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={stagger}
+              initial="hidden"
+              animate="show"
+              className="space-y-2.5"
+            >
+              <AnimatePresence mode="popLayout">
+                {filtered.map((notif) => (
+                  <NotifCard
+                    key={notif.id}
+                    notif={notif}
+                    onMarkRead={markRead}
+                    onDelete={deleteNotification}
+                  />
+                ))}
+              </AnimatePresence>
+            </motion.div>
           )}
-        </div>
+
+          {/* ── Bulk actions footer ───────────────────────────────── */}
+          {filtered.length > 0 && (
+            <motion.div variants={pop}>
+              <div className="flex items-center justify-between py-3 px-4 rounded-xl bg-white/3 border border-white/8 flex-wrap gap-2">
+                <span className="text-white/25 text-xs">Hiển thị {filtered.length} / {notifications.length} thông báo</span>
+                <div className="flex items-center gap-2">
+                  {unreadCount > 0 && (
+                    <button onClick={() => markAllRead()}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border bg-emerald-500/10 border-emerald-500/25 text-emerald-300 hover:bg-emerald-500/20 transition-all">
+                      <CheckCheck className="w-3 h-3" /> Đọc tất cả ({unreadCount})
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </AppShell>
   );

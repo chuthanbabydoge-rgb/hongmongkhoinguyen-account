@@ -1,16 +1,15 @@
 import { Notification, NotificationSettings, NotificationCategory } from "../types/notification";
 
-const NOTIF_KEY = "universe_notifications";
-const SETTINGS_KEY = "universe_notification_settings";
+const NOTIF_KEY = "universe_notifications_v3";
+const SETTINGS_KEY = "universe_notification_settings_v3";
 
 const DEFAULT_CATEGORIES: NotificationSettings["categories"] = {
   system: { enabled: true, push: true, sound: true },
-  identity: { enabled: true, push: true, sound: true },
-  safepass: { enabled: true, push: true, sound: true },
-  football: { enabled: true, push: false, sound: false },
-  animals: { enabled: true, push: false, sound: false },
-  worlds: { enabled: true, push: false, sound: false },
-  exchange: { enabled: true, push: true, sound: false },
+  security: { enabled: true, push: true, sound: true },
+  marketplace: { enabled: true, push: true, sound: false },
+  rewards: { enabled: true, push: true, sound: true },
+  social: { enabled: true, push: false, sound: false },
+  world_events: { enabled: true, push: false, sound: false },
 };
 
 export const notificationStore = {
