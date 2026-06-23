@@ -19,3 +19,4 @@
 
 export * from "./profiles";
 export * from "./avatars";
+export * from "./achievements";

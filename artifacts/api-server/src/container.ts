@@ -6,6 +6,9 @@ import { AvatarService } from "./services/AvatarService";
 import { AvatarController } from "./controllers/AvatarController";
 import { IdentityService } from "./services/IdentityService";
 import { IdentityController } from "./controllers/IdentityController";
+import { SupabaseAchievementRepository } from "./repositories/SupabaseAchievementRepository";
+import { AchievementService } from "./services/AchievementService";
+import { AchievementController } from "./controllers/AchievementController";
 
 /**
  * Dependency injection container — wires repositories → services → controllers.
@@ -25,6 +28,10 @@ function createContainer() {
   const identityService = new IdentityService(profileRepository, avatarRepository);
   const identityController = new IdentityController(identityService);
 
+  const achievementRepository = new SupabaseAchievementRepository();
+  const achievementService = new AchievementService(achievementRepository);
+  const achievementController = new AchievementController(achievementService);
+
   return {
     profileRepository,
     profileService,
@@ -34,6 +41,9 @@ function createContainer() {
     avatarController,
     identityService,
     identityController,
+    achievementRepository,
+    achievementService,
+    achievementController,
   } as const;
 }
 

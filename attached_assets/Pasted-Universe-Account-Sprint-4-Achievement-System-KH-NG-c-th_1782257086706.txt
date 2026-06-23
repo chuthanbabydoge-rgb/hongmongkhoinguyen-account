@@ -1,0 +1,386 @@
+Universe Account
+Sprint 4 — Achievement System
+
+KHÔNG được thay đổi kiến trúc hiện tại.
+
+Tiếp tục sử dụng đúng architecture đã có:
+
+Repository
+Service
+Controller
+Routes
+Container
+Zod
+Vitest
+
+Không được sửa các API cũ.
+Không được làm hỏng Sprint 1–3.
+
+==========================================
+MỤC TIÊU
+==========================================
+
+Xây dựng hệ thống Achievement dùng chung cho toàn bộ Universe Ecosystem.
+
+Achievement sẽ được Football Universe,
+Marketplace,
+Animal Evolution,
+World Creator,
+SafePass...
+
+gọi để cấp thành tích.
+
+Đây KHÔNG phải Reputation.
+
+Achievement chỉ lưu thành tích.
+
+==========================================
+DATABASE
+==========================================
+
+Tạo schema
+
+lib/db/src/schema/achievements.ts
+
+Table:
+
+achievements
+
+id uuid pk
+
+key text unique
+
+name text
+
+description text
+
+icon text
+
+category text
+
+points integer default 0
+
+created_at timestamp
+
+------------------------------------------
+
+user_achievements
+
+id uuid pk
+
+user_id uuid
+
+achievement_id uuid
+
+granted_by text
+
+metadata jsonb
+
+granted_at timestamp
+
+Unique
+
+(user_id, achievement_id)
+
+==========================================
+MODEL
+==========================================
+
+src/models/achievement.ts
+
+Achievement
+
+UserAchievement
+
+GrantAchievementRequest
+
+AchievementCategory
+
+enum
+
+ACCOUNT
+
+MARKETPLACE
+
+SPORT
+
+WORLD
+
+ANIMAL
+
+SOCIAL
+
+SPECIAL
+
+==========================================
+DEFAULT ACHIEVEMENTS
+==========================================
+
+Seed mặc định
+
+FIRST_LOGIN
+
+FIRST_PROFILE
+
+FIRST_AVATAR
+
+FIRST_MARKETPLACE_PURCHASE
+
+FIRST_MARKETPLACE_SALE
+
+FIRST_FOOTBALL_MATCH
+
+FIRST_WORLD_CREATED
+
+FIRST_PET_CREATED
+
+EXPLORER
+
+COLLECTOR
+
+TRADER
+
+FOUNDER
+
+==========================================
+REPOSITORY
+==========================================
+
+IAchievementRepository
+
+Methods
+
+seedDefaults()
+
+getAll()
+
+findByKey()
+
+findById()
+
+grant()
+
+hasAchievement()
+
+getUserAchievements()
+
+countUserAchievements()
+
+==========================================
+SERVICE
+==========================================
+
+AchievementService
+
+Methods
+
+initialize()
+
+getAll()
+
+grantAchievement()
+
+grantAchievementByKey()
+
+hasAchievement()
+
+getUserAchievements()
+
+count()
+
+==========================================
+BUSINESS RULES
+==========================================
+
+Grant lần đầu
+
+OK
+
+Grant lần 2
+
+Không tạo duplicate
+
+Trả về
+
+created=false
+
+Nếu achievement không tồn tại
+
+throw AchievementNotFoundError
+
+==========================================
+CONTROLLER
+==========================================
+
+AchievementController
+
+Endpoints
+
+GET /api/achievements
+
+GET /api/achievements/me
+
+GET /api/achievements/count
+
+POST /api/achievements/grant
+
+==========================================
+BODY
+==========================================
+
+POST
+
+{
+   "userId":"...",
+   "key":"FIRST_LOGIN",
+   "grantedBy":"system",
+   "metadata":{
+      "source":"account"
+   }
+}
+
+==========================================
+RESPONSE
+==========================================
+
+Grant
+
+{
+   "created":true,
+   "achievement":{}
+}
+
+Duplicate
+
+{
+   "created":false,
+   "achievement":{}
+}
+
+==========================================
+AUTH
+==========================================
+
+GET /me
+
+dùng auth middleware hiện tại
+
+Không truyền userId
+
+==========================================
+CONTAINER
+==========================================
+
+Wire
+
+Repository
+
+↓
+
+Service
+
+↓
+
+Controller
+
+==========================================
+TESTS
+==========================================
+
+Tạo
+
+AchievementService.test.ts
+
+Ít nhất 30 tests
+
+Bao gồm
+
+✓ seed default achievements
+
+✓ get all
+
+✓ grant achievement
+
+✓ duplicate grant
+
+✓ count achievements
+
+✓ get user achievements
+
+✓ has achievement
+
+✓ unknown achievement
+
+✓ metadata stored
+
+✓ grantedBy stored
+
+✓ multiple achievements
+
+✓ multiple users
+
+✓ unique constraint
+
+✓ initialize only once
+
+✓ empty state
+
+✓ repository errors
+
+✓ validation
+
+==========================================
+TYPECHECK
+==========================================
+
+Không được phát sinh lỗi TypeScript mới.
+
+Toàn bộ Sprint 1
+
+Sprint 2
+
+Sprint 3
+
+phải tiếp tục pass.
+
+==========================================
+EXPECTED
+==========================================
+
+Sau khi hoàn thành phải báo cáo:
+
+1.
+
+Files created
+
+2.
+
+Files modified
+
+3.
+
+Endpoints
+
+4.
+
+Ví dụ API
+
+5.
+
+Số test mới
+
+6.
+
+Tổng số test pass
+
+7.
+
+Typecheck PASS
+
+Không viết pseudo code.
+
+Viết production-ready code.
+
+Không bỏ TODO.
+
+Không mock business logic.
