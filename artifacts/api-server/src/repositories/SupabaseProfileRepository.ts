@@ -78,6 +78,15 @@ export class SupabaseProfileRepository implements IProfileRepository {
     return rows[0] ? toModel(rows[0]) : null;
   }
 
+  async existsByUniverseId(universeId: string): Promise<boolean> {
+    const rows = await db
+      .select({ id: profilesTable.id })
+      .from(profilesTable)
+      .where(eq(profilesTable.universeId, universeId))
+      .limit(1);
+    return rows.length > 0;
+  }
+
   async count(): Promise<number> {
     const result = await db.select({ value: drizzleCount() }).from(profilesTable);
     return result[0]?.value ?? 0;

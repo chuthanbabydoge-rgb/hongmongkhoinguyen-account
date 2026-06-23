@@ -1,0 +1,323 @@
+Mục tiêu
+
+Build Sprint 3 của Universe Account.
+
+Đây KHÔNG phải authentication.
+
+Đây là tầng Identity Bridge để toàn bộ ecosystem (Universe Hub, Football Universe, Animal Evolution, World Creator...) đều dùng chung Identity.
+
+Project hiện tại:
+
+Universe Account
+
+Stack:
+
+Express
+TypeScript
+Drizzle
+Supabase
+Repository Pattern
+Service Layer
+Controller Layer
+Container DI
+Vitest
+
+Giữ nguyên coding style hiện tại.
+
+Không refactor các module cũ.
+
+Không làm hỏng các test đã pass.
+
+--------------------------------------------------
+
+YÊU CẦU
+
+Build các chức năng sau.
+
+==================================================
+1. Repository
+==================================================
+
+Mở rộng ProfileRepository.
+
+Thêm:
+
+findByUniverseId(universeId)
+
+existsByUniverseId(universeId)
+
+findByUserId(userId)
+
+Không duplicate code.
+
+==================================================
+2. Service
+==================================================
+
+Trong ProfileService thêm:
+
+getProfileByUniverseId(universeId)
+
+getSharedIdentity(userId)
+
+verifyOwnership(userId, profileId)
+
+verifyUniverseOwnership(userId, universeId)
+
+existsUniverseId(universeId)
+
+Các rule:
+
+Nếu profile không tồn tại
+
+→ ProfileNotFoundError
+
+Nếu ownership sai
+
+→ ForbiddenError
+
+==================================================
+3. Shared Identity DTO
+==================================================
+
+Tạo model mới:
+
+SharedIdentity
+
+Bao gồm:
+
+id
+
+userId
+
+universeId
+
+displayName
+
+avatarUrl
+
+avatarId
+
+reputationLevel
+
+createdAt
+
+Không expose dữ liệu private.
+
+Không expose email.
+
+Không expose auth token.
+
+Không expose phone.
+
+==================================================
+4. Controller
+==================================================
+
+Thêm endpoint:
+
+GET /api/profile/universe/:universeId
+
+GET /api/profile/shared/me
+
+GET /api/profile/shared/:userId
+
+GET /api/profile/exists/:universeId
+
+==================================================
+5. Ownership Middleware
+==================================================
+
+Tạo middleware:
+
+requireProfileOwner
+
+Input:
+
+profileId
+
+Lấy userId từ auth middleware.
+
+Nếu profile.userId != auth.userId
+
+→ 403
+
+Nếu đúng
+
+next()
+
+==================================================
+6. Identity Bridge API
+==================================================
+
+Thêm endpoint:
+
+GET /api/identity/me
+
+Response:
+
+{
+  profile,
+  avatar
+}
+
+Đây là API dùng chung cho:
+
+Universe Hub
+
+Football Universe
+
+Animal Evolution
+
+World Creator
+
+Exchange Hub
+
+SafePass
+
+==================================================
+7. Public Identity API
+==================================================
+
+GET
+
+/api/identity/:universeId
+
+Response:
+
+{
+    universeId,
+    displayName,
+    avatarUrl,
+    reputationLevel
+}
+
+Không trả:
+
+email
+
+phone
+
+token
+
+==================================================
+8. Container
+==================================================
+
+Wire:
+
+ProfileService
+
+AvatarService
+
+IdentityController
+
+IdentityService
+
+==================================================
+9. Unit Tests
+==================================================
+
+Viết đầy đủ test.
+
+Bao gồm:
+
+✓ getProfileByUniverseId success
+
+✓ getProfileByUniverseId not found
+
+✓ existsUniverseId true
+
+✓ existsUniverseId false
+
+✓ verifyOwnership success
+
+✓ verifyOwnership forbidden
+
+✓ verifyUniverseOwnership success
+
+✓ verifyUniverseOwnership forbidden
+
+✓ getSharedIdentity success
+
+✓ getSharedIdentity hides private fields
+
+✓ identity/me returns profile + avatar
+
+✓ identity/:universeId returns public identity
+
+✓ middleware blocks wrong owner
+
+✓ middleware passes correct owner
+
+✓ repository findByUniverseId
+
+✓ repository existsByUniverseId
+
+✓ profile lookup preserves Universe ID
+
+✓ avatar included in shared identity
+
+Ít nhất:
+
+20 tests mới.
+
+==================================================
+10. Không được làm
+
+Không sửa Marketplace.
+
+Không sửa Wallet.
+
+Không sửa Inventory.
+
+Không refactor auth.
+
+Không đổi API cũ.
+
+Không phá ProfileService.
+
+Không phá AvatarService.
+
+==================================================
+11. Kết quả mong muốn
+
+Typecheck sạch.
+
+Toàn bộ test cũ vẫn pass.
+
+Toàn bộ test mới pass.
+
+Ví dụ:
+
+Tests:
+64/64 passed
+
+hoặc nhiều hơn nếu cần.
+
+==================================================
+12. Báo cáo cuối
+
+Khi hoàn thành chỉ trả về:
+
+1.
+
+Danh sách file tạo mới
+
+2.
+
+Danh sách file sửa
+
+3.
+
+Danh sách endpoint mới
+
+4.
+
+Kết quả test
+
+5.
+
+Ví dụ response API
+
+Không giải thích dài dòng.

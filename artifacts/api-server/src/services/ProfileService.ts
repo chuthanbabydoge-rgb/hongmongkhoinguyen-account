@@ -1,5 +1,6 @@
 import type { IProfileRepository } from "../repositories/IProfileRepository";
 import type { Profile, UpdateProfileInput } from "../models/profile";
+import type { SharedIdentity } from "../models/sharedIdentity";
 import { formatUniverseId } from "../models/profile";
 import { UpdateProfileSchema } from "../models/profile";
 import { ZodError } from "zod";
@@ -22,6 +23,13 @@ export class ValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ValidationError";
+  }
+}
+
+export class ForbiddenError extends Error {
+  constructor(userId: string, resource: string) {
+    super(`Forbidden: user ${userId} does not own resource ${resource}`);
+    this.name = "ForbiddenError";
   }
 }
 
@@ -49,6 +57,44 @@ export class ProfileService {
     const profile = await this.repo.findById(id);
     if (!profile) throw new ProfileNotFoundError(id);
     return profile;
+  }
+
+  async getProfileByUniverseId(universeId: string): Promise<Profile> {
+    const profile = await this.repo.findByUniverseId(universeId);
+    if (!profile) throw new ProfileNotFoundError(universeId);
+    return profile;
+  }
+
+  async existsUniverseId(universeId: string): Promise<boolean> {
+    return this.repo.existsByUniverseId(universeId);
+  }
+
+  async getSharedIdentity(userId: string): Promise<SharedIdentity> {
+    const profile = await this.repo.findByUserId(userId);
+    if (!profile) throw new ProfileNotFoundError(userId);
+
+    return {
+      id: profile.id,
+      userId: profile.userId,
+      universeId: profile.universeId,
+      displayName: profile.displayName,
+      avatarUrl: profile.avatarUrl,
+      avatarId: null,
+      reputationLevel: "standard",
+      createdAt: profile.createdAt,
+    };
+  }
+
+  async verifyOwnership(userId: string, profileId: string): Promise<void> {
+    const profile = await this.repo.findById(profileId);
+    if (!profile) throw new ProfileNotFoundError(profileId);
+    if (profile.userId !== userId) throw new ForbiddenError(userId, profileId);
+  }
+
+  async verifyUniverseOwnership(userId: string, universeId: string): Promise<void> {
+    const profile = await this.repo.findByUniverseId(universeId);
+    if (!profile) throw new ProfileNotFoundError(universeId);
+    if (profile.userId !== userId) throw new ForbiddenError(userId, universeId);
   }
 
   async createProfile(userId: string, username?: string): Promise<Profile> {

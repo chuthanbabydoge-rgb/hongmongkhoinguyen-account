@@ -57,6 +57,13 @@ export class InMemoryProfileRepository implements IProfileRepository {
     return null;
   }
 
+  async existsByUniverseId(universeId: string): Promise<boolean> {
+    for (const profile of this.store.values()) {
+      if (profile.universeId === universeId) return true;
+    }
+    return false;
+  }
+
   async count(): Promise<number> {
     return this.store.size;
   }
