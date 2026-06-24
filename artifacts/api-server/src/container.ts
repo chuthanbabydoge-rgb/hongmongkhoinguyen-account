@@ -18,6 +18,9 @@ import { ReputationController } from "./controllers/ReputationController";
 import { SupabaseActivityRepository } from "./repositories/SupabaseActivityRepository";
 import { ActivityService } from "./services/ActivityService";
 import { ActivityController } from "./controllers/ActivityController";
+import { SupabaseApplicationRepository } from "./repositories/SupabaseApplicationRepository";
+import { SSOService } from "./services/SSOService";
+import { SSOController } from "./controllers/SSOController";
 
 /**
  * Dependency injection container — wires repositories → services → controllers.
@@ -57,6 +60,11 @@ function createContainer() {
   const reputationService = new ReputationService(reputationRepository, notificationService, activityService);
   const reputationController = new ReputationController(reputationService);
 
+  // SSO — depends on profileService, avatarService, identityService
+  const applicationRepository = new SupabaseApplicationRepository();
+  const ssoService = new SSOService(applicationRepository, profileService, avatarService, identityService);
+  const ssoController = new SSOController(ssoService);
+
   return {
     profileRepository,
     profileService,
@@ -78,6 +86,9 @@ function createContainer() {
     reputationRepository,
     reputationService,
     reputationController,
+    applicationRepository,
+    ssoService,
+    ssoController,
   } as const;
 }
 

@@ -1,0 +1,629 @@
+Sprint 8 — Cross-App Authentication (Universe SSO Layer)
+
+Mục tiêu
+
+Biến Universe Account thành Identity Provider (IdP) cho toàn bộ Universe Ecosystem.
+
+Các hệ thống:
+
+- Universe Hub
+- Football Universe
+- Animal Evolution
+- World Creator
+- SafePass
+- Exchange Hub
+
+đều sử dụng chung Identity của Universe Account.
+
+Không tự lưu user riêng.
+
+Không tự auth riêng.
+
+Universe Account là nguồn xác thực duy nhất.
+
+──────────────────────────────
+
+Kiến trúc
+
+Tuân thủ:
+
+Model
+Repository
+Service
+Controller
+Routes
+Tests
+
+Không phá Sprint 1-7.
+
+──────────────────────────────
+
+Database Schema
+
+Tạo file:
+
+lib/db/src/schema/applications.ts
+
+Schema:
+
+applications
+(
+  id uuid primary key default gen_random_uuid(),
+
+  name text not null,
+
+  slug text not null unique,
+
+  client_id text not null unique,
+
+  client_secret text not null,
+
+  permissions jsonb not null default '[]',
+
+  is_active boolean not null default true,
+
+  created_at timestamp default now()
+)
+
+──────────────────────────────
+
+Access Tokens
+
+Tạo:
+
+access_tokens
+(
+  id uuid primary key default gen_random_uuid(),
+
+  user_id uuid not null,
+
+  application_id uuid not null,
+
+  token text not null unique,
+
+  expires_at timestamp not null,
+
+  created_at timestamp default now()
+)
+
+──────────────────────────────
+
+Models
+
+Tạo:
+
+src/models/application.ts
+
+Bao gồm:
+
+Application
+
+CreateApplicationRequest
+
+AccessToken
+
+VerifyTokenResponse
+
+Permission
+
+Zod validation
+
+──────────────────────────────
+
+Permissions
+
+Enum:
+
+PROFILE_READ
+
+AVATAR_READ
+
+ACHIEVEMENT_READ
+
+NOTIFICATION_READ
+
+REPUTATION_READ
+
+ACTIVITY_READ
+
+IDENTITY_READ
+
+FULL_ACCESS
+
+──────────────────────────────
+
+Repository
+
+Tạo:
+
+src/repositories/IApplicationRepository.ts
+
+src/repositories/InMemoryApplicationRepository.ts
+
+src/repositories/SupabaseApplicationRepository.ts
+
+Methods:
+
+createApplication()
+
+findByClientId()
+
+findBySlug()
+
+findById()
+
+getAllApplications()
+
+saveToken()
+
+findToken()
+
+revokeToken()
+
+──────────────────────────────
+
+Service
+
+Tạo:
+
+src/services/SSOService.ts
+
+Errors:
+
+ApplicationNotFoundError
+
+InvalidClientError
+
+InvalidTokenError
+
+PermissionDeniedError
+
+──────────────────────────────
+
+Methods
+
+registerApplication(
+  name,
+  slug,
+  permissions
+)
+
+generateAccessToken(
+  userId,
+  clientId,
+  clientSecret
+)
+
+verifyToken(
+  token
+)
+
+revokeToken(
+  token
+)
+
+getApplications()
+
+──────────────────────────────
+
+Business Rules
+
+Khi registerApplication():
+
+Tự sinh:
+
+clientId
+
+clientSecret
+
+uuid
+
+Không cho slug trùng.
+
+──────────────────────────────
+
+Token Lifetime
+
+Mặc định:
+
+30 ngày
+
+expiresAt = now + 30d
+
+──────────────────────────────
+
+generateAccessToken()
+
+Kiểm tra:
+
+clientId
+
+clientSecret
+
+application active
+
+Nếu hợp lệ:
+
+Sinh token
+
+Lưu DB
+
+Trả về:
+
+token
+
+expiresAt
+
+──────────────────────────────
+
+verifyToken()
+
+Kiểm tra:
+
+token tồn tại
+
+chưa hết hạn
+
+application active
+
+──────────────────────────────
+
+Nếu hợp lệ trả:
+
+{
+  userId,
+  universeId,
+  displayName,
+  avatarUrl,
+  permissions
+}
+
+Sử dụng:
+
+ProfileService
+
+IdentityService
+
+để lấy dữ liệu thật.
+
+──────────────────────────────
+
+revokeToken()
+
+Xóa token.
+
+──────────────────────────────
+
+Controller
+
+Tạo:
+
+src/controllers/SSOController.ts
+
+Handlers:
+
+handleRegisterApplication
+
+handleGenerateToken
+
+handleVerifyToken
+
+handleRevokeToken
+
+handleGetApplications
+
+──────────────────────────────
+
+Routes
+
+Tạo:
+
+src/routes/sso.ts
+
+Endpoints
+
+POST /api/sso/apps/register
+
+GET  /api/sso/apps
+
+POST /api/sso/token
+
+POST /api/sso/verify
+
+POST /api/sso/revoke
+
+──────────────────────────────
+
+Responses
+
+POST /api/sso/apps/register
+
+Body:
+
+{
+  "name":"Football Universe",
+  "slug":"football-universe",
+  "permissions":[
+    "PROFILE_READ",
+    "AVATAR_READ"
+  ]
+}
+
+Response:
+
+{
+  "application":{
+    "id":"uuid",
+    "name":"Football Universe",
+    "slug":"football-universe",
+    "clientId":"...",
+    "clientSecret":"..."
+  }
+}
+
+──────────────────────────────
+
+POST /api/sso/token
+
+{
+  "userId":"uuid",
+  "clientId":"...",
+  "clientSecret":"..."
+}
+
+Response:
+
+{
+  "token":"...",
+  "expiresAt":"..."
+}
+
+──────────────────────────────
+
+POST /api/sso/verify
+
+{
+  "token":"..."
+}
+
+Response:
+
+{
+  "userId":"uuid",
+  "universeId":"UNI-000001",
+  "displayName":"Commander Nova",
+  "avatarUrl":"...",
+  "permissions":[
+    "PROFILE_READ",
+    "AVATAR_READ"
+  ]
+}
+
+──────────────────────────────
+
+POST /api/sso/revoke
+
+{
+  "token":"..."
+}
+
+Response:
+
+{
+  "revoked":true
+}
+
+──────────────────────────────
+
+Integration
+
+IdentityService
+
+ProfileService
+
+AvatarService
+
+được inject vào SSOService.
+
+verifyToken()
+
+trả dữ liệu thật từ ecosystem identity.
+
+──────────────────────────────
+
+Routes Index
+
+Cập nhật:
+
+src/routes/index.ts
+
+Mount:
+
+sso router
+
+──────────────────────────────
+
+Container
+
+Cập nhật:
+
+src/container.ts
+
+Wire:
+
+ApplicationRepository
+→ SSOService
+→ SSOController
+
+Inject:
+
+ProfileService
+
+AvatarService
+
+IdentityService
+
+──────────────────────────────
+
+Tests
+
+Tạo:
+
+src/__tests__/SSOService.test.ts
+
+Ít nhất 60 tests.
+
+Bao gồm:
+
+✓ register application
+
+✓ unique slug
+
+✓ generated client id
+
+✓ generated client secret
+
+✓ get applications
+
+✓ empty applications
+
+✓ generate token
+
+✓ invalid client id
+
+✓ invalid client secret
+
+✓ inactive application
+
+✓ verify valid token
+
+✓ verify invalid token
+
+✓ verify revoked token
+
+✓ verify expired token
+
+✓ revoke token
+
+✓ revoke twice
+
+✓ token lifetime
+
+✓ token uniqueness
+
+✓ multiple tokens
+
+✓ multiple applications
+
+✓ application isolation
+
+✓ permissions stored
+
+✓ permissions returned
+
+✓ profile returned
+
+✓ universe id returned
+
+✓ avatar returned
+
+✓ display name returned
+
+✓ missing profile
+
+✓ missing avatar
+
+✓ user isolation
+
+✓ repository errors
+
+✓ validation errors
+
+✓ timestamp checks
+
+✓ active app
+
+✓ inactive app
+
+✓ token persistence
+
+✓ lookup by client id
+
+✓ lookup by slug
+
+✓ duplicate client ids prevented
+
+✓ duplicate tokens prevented
+
+✓ full access permission
+
+✓ profile read permission
+
+✓ avatar read permission
+
+✓ achievement read permission
+
+✓ notification read permission
+
+✓ reputation read permission
+
+✓ activity read permission
+
+✓ identity read permission
+
+✓ verify payload shape
+
+✓ revoke removes token
+
+✓ application retrieval
+
+✓ token expiry edge cases
+
+✓ future expiry
+
+✓ past expiry
+
+✓ many apps
+
+✓ many tokens
+
+✓ cleanup behavior
+
+✓ integration with identity
+
+✓ integration with profile
+
+✓ integration with avatar
+
+──────────────────────────────
+
+Definition of Done
+
+Endpoints hoạt động:
+
+POST /api/sso/apps/register
+
+GET  /api/sso/apps
+
+POST /api/sso/token
+
+POST /api/sso/verify
+
+POST /api/sso/revoke
+
+Typecheck PASS
+
+Tất cả test PASS
+
+Không phá Sprint 1-7
+
+Khi hoàn thành hãy trả về:
+
+- Danh sách file tạo mới
+- Danh sách file sửa đổi
+- API endpoints
+- Ví dụ response
+- Số test mới
+- Tổng số test pass
+- Kết quả typecheck
+- Cách Football Universe / World Creator / SafePass sử dụng SSO

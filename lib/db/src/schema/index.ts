@@ -23,3 +23,4 @@ export * from "./achievements";
 export * from "./notifications";
 export * from "./reputations";
 export * from "./activities";
+export * from "./applications";
