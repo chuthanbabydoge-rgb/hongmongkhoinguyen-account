@@ -1,0 +1,187 @@
+PROMPT — AUTH PASS 1: Register + Login + JWT + Refresh Token
+
+Build Sprint AUTH-1 for Universe Account. Follow the existing architecture and coding style used in Sprint 1–10 (Repository Pattern, Service Layer, Controller Layer, Route Layer, Zod validation, InMemory + Supabase repositories, Vitest tests, dependency injection via container.ts).
+
+Goal:
+Universe Account becomes the central authentication provider for the entire ecosystem.
+
+Create:
+
+Database schema:
+
+users
+refresh_tokens
+
+Fields:
+
+users:
+
+id (uuid)
+email (unique)
+username (unique)
+password_hash
+email_verified (boolean default false)
+created_at
+updated_at
+
+refresh_tokens:
+
+id (uuid)
+user_id
+token_hash
+expires_at
+revoked_at nullable
+created_at
+
+Models:
+
+User
+RegisterRequest
+LoginRequest
+AuthTokens
+RefreshToken
+JwtPayload
+
+Repositories:
+
+IUserRepository
+IRefreshTokenRepository
+InMemoryUserRepository
+InMemoryRefreshTokenRepository
+SupabaseUserRepository
+SupabaseRefreshTokenRepository
+
+Service:
+AuthService
+
+Methods:
+
+register()
+login()
+refreshAccessToken()
+logout()
+validateAccessToken()
+getCurrentUser()
+
+Requirements:
+
+Register:
+
+validate email
+validate password min 8 chars
+hash password using bcrypt
+reject duplicate email
+reject duplicate username
+
+Login:
+
+email + password
+verify bcrypt hash
+return access token + refresh token
+
+JWT:
+
+access token expires 15 minutes
+refresh token expires 30 days
+
+Refresh:
+
+validate refresh token
+rotate refresh token
+revoke old token
+
+Logout:
+
+revoke refresh token
+
+Current User:
+
+extract from JWT
+
+Middleware:
+
+authenticateJWT()
+
+Controllers:
+AuthController
+
+Routes:
+
+POST /api/auth/register
+POST /api/auth/login
+POST /api/auth/refresh
+POST /api/auth/logout
+GET /api/auth/me
+
+Integrations:
+
+After register:
+
+auto-create Identity
+auto-create Profile
+auto-create Avatar
+auto-create Reputation
+auto-create Settings
+
+After register:
+ActivityService.record(
+type: ACCOUNT,
+title: "Account Created"
+)
+
+After register:
+NotificationService.send(
+priority: HIGH,
+title: "Welcome to Universe"
+)
+
+Container:
+Wire repositories → AuthService → AuthController
+
+Tests:
+
+Create AuthService.test.ts
+
+Cover:
+
+register success
+duplicate email
+duplicate username
+password validation
+login success
+login invalid password
+login unknown user
+JWT validation
+refresh token success
+refresh token revoked
+logout
+getCurrentUser
+auto-create profile integration
+activity integration
+notification integration
+multi-user isolation
+
+Target:
+120+ tests
+
+Acceptance Criteria:
+
+120+ tests pass
+api-server typecheck clean
+no regression in Sprint 1–10
+JWT auth working
+refresh token rotation working
+password hashing working
+auto-create account ecosystem records working
+
+Output:
+Provide complete Sprint AUTH-1 report:
+
+files created
+files modified
+endpoints
+sample requests
+sample responses
+test count
+total project test count
+typecheck status
