@@ -1,0 +1,550 @@
+Sprint 10 — User Settings & Preferences
+Mục tiêu
+
+Xây dựng hệ thống cài đặt người dùng trung tâm cho toàn bộ Universe Ecosystem.
+
+Sprint này là lớp cấu hình dùng chung cho:
+
+Universe Account
+Universe Hub
+Football Universe
+Animal Evolution
+World Creator
+SafePass
+Exchange Hub
+
+Mọi ứng dụng sẽ đọc settings từ Universe Account thay vì lưu riêng.
+
+Kiến trúc bắt buộc
+
+Tuân thủ 100% kiến trúc hiện tại:
+
+Model
+Repository
+Service
+Controller
+Routes
+Tests
+
+Không được phá Sprint 1 → Sprint 9.
+
+Database Schema
+
+Tạo file:
+
+lib/db/src/schema/userSettings.ts
+Bảng user_settings
+id uuid primary key
+
+user_id uuid unique not null
+
+theme text not null default 'SYSTEM'
+
+language text not null default 'en'
+
+timezone text not null default 'UTC'
+
+privacy_profile text not null default 'PUBLIC'
+
+privacy_activity text not null default 'PUBLIC'
+
+privacy_reputation text not null default 'PUBLIC'
+
+email_notifications boolean not null default true
+
+push_notifications boolean not null default true
+
+marketplace_notifications boolean not null default true
+
+achievement_notifications boolean not null default true
+
+reputation_notifications boolean not null default true
+
+security_notifications boolean not null default true
+
+allow_friend_requests boolean not null default true
+
+allow_direct_messages boolean not null default true
+
+show_online_status boolean not null default true
+
+show_last_seen boolean not null default true
+
+created_at timestamp not null
+
+updated_at timestamp not null
+
+Export từ:
+
+lib/db/src/schema/index.ts
+Models
+
+Tạo:
+
+src/models/userSettings.ts
+
+Bao gồm:
+
+UserSettings
+
+UpdateUserSettingsRequest
+
+NotificationPreferences
+
+PrivacyPreferences
+
+SecurityPreferences
+Enums
+
+Theme:
+
+LIGHT
+DARK
+SYSTEM
+
+Language:
+
+en
+vi
+ja
+ko
+zh
+
+Privacy:
+
+PUBLIC
+FRIENDS
+PRIVATE
+
+Validation bằng Zod.
+
+Repository Layer
+
+Tạo:
+
+src/repositories/IUserSettingsRepository.ts
+
+src/repositories/InMemoryUserSettingsRepository.ts
+
+src/repositories/SupabaseUserSettingsRepository.ts
+
+Methods:
+
+create()
+
+findByUserId()
+
+update()
+
+delete()
+
+exists()
+
+upsert()
+Service Layer
+
+Tạo:
+
+src/services/UserSettingsService.ts
+
+Errors:
+
+SettingsNotFoundError
+
+SettingsValidationError
+Auto Create Settings
+
+Khi user chưa có settings:
+
+getMySettings(userId)
+
+tự động tạo:
+
+{
+  "theme":"SYSTEM",
+  "language":"en",
+  "timezone":"UTC",
+  "privacyProfile":"PUBLIC",
+  "privacyActivity":"PUBLIC",
+  "privacyReputation":"PUBLIC",
+  "emailNotifications":true,
+  "pushNotifications":true,
+  "marketplaceNotifications":true,
+  "achievementNotifications":true,
+  "reputationNotifications":true,
+  "securityNotifications":true,
+  "allowFriendRequests":true,
+  "allowDirectMessages":true,
+  "showOnlineStatus":true,
+  "showLastSeen":true
+}
+Core Methods
+Get Settings
+getMySettings(userId)
+Update Settings
+updateMySettings(userId,data)
+
+Cho phép update từng phần:
+
+theme
+language
+timezone
+
+privacyProfile
+privacyActivity
+privacyReputation
+
+emailNotifications
+pushNotifications
+marketplaceNotifications
+achievementNotifications
+reputationNotifications
+securityNotifications
+
+allowFriendRequests
+allowDirectMessages
+showOnlineStatus
+showLastSeen
+Privacy Resolver
+
+Method:
+
+canViewProfile(ownerSettings,viewerRelation)
+
+viewerRelation:
+
+OWNER
+FRIEND
+PUBLIC
+
+Rules:
+
+PUBLIC   -> ai cũng xem được
+
+FRIENDS  -> owner + friend
+
+PRIVATE  -> chỉ owner
+Notification Preferences
+
+Method:
+
+shouldSendNotification(
+userSettings,
+notificationType
+)
+
+Map:
+
+ACHIEVEMENT
+→ achievementNotifications
+
+REPUTATION
+→ reputationNotifications
+
+SECURITY
+→ securityNotifications
+
+MARKETPLACE
+→ marketplaceNotifications
+
+SYSTEM
+→ pushNotifications
+
+Return:
+
+true | false
+Security Preferences
+
+Method:
+
+isSecurityAlertEnabled()
+
+Đọc:
+
+securityNotifications
+Controllers
+
+Tạo:
+
+src/controllers/UserSettingsController.ts
+
+Handlers:
+
+getMySettings()
+
+updateMySettings()
+
+resetSettings()
+Routes
+
+Tạo:
+
+src/routes/settings.ts
+
+Endpoints
+
+Settings
+GET /api/settings/me
+PATCH /api/settings/me
+POST /api/settings/reset
+
+Reset về mặc định.
+
+Response Examples
+GET /api/settings/me
+{
+  "settings": {
+    "theme":"SYSTEM",
+    "language":"en",
+    "timezone":"UTC",
+    "privacyProfile":"PUBLIC",
+    "privacyActivity":"PUBLIC",
+    "privacyReputation":"PUBLIC",
+    "emailNotifications":true,
+    "pushNotifications":true,
+    "marketplaceNotifications":true,
+    "achievementNotifications":true,
+    "reputationNotifications":true,
+    "securityNotifications":true,
+    "allowFriendRequests":true,
+    "allowDirectMessages":true,
+    "showOnlineStatus":true,
+    "showLastSeen":true
+  }
+}
+PATCH /api/settings/me
+
+Request:
+
+{
+  "theme":"DARK",
+  "language":"vi",
+  "privacyProfile":"FRIENDS",
+  "showLastSeen":false
+}
+
+Response:
+
+{
+  "settings":{
+    ...
+  }
+}
+POST /api/settings/reset
+{
+  "reset":true
+}
+Activity Integration
+
+Inject:
+
+ActivityService
+
+vào:
+
+UserSettingsService
+
+Khi update settings:
+
+type = ACCOUNT
+
+title = Settings Updated
+
+sourceApp = universe-account
+
+Khi reset settings:
+
+type = ACCOUNT
+
+title = Settings Reset
+
+sourceApp = universe-account
+Notification Integration
+
+Inject:
+
+NotificationService
+
+Khi:
+
+theme changed
+
+không gửi notification.
+
+Khi:
+
+privacy changed
+
+gửi:
+
+ACCOUNT
+priority NORMAL
+
+Khi:
+
+securityNotifications disabled
+
+gửi:
+
+SECURITY
+priority HIGH
+Container Wiring
+
+Sửa:
+
+src/container.ts
+
+Wire:
+
+UserSettingsRepository
+↓
+UserSettingsService
+↓
+UserSettingsController
+
+Inject:
+
+ActivityService
+NotificationService
+Routes Index
+
+Mount:
+
+/api/settings
+Unit Tests
+
+Tạo:
+
+src/__tests__/UserSettingsService.test.ts
+
+Tối thiểu:
+
+75 tests
+Creation Tests
+auto-create settings
+
+defaults loaded
+
+idempotent creation
+
+multiple users
+
+user isolation
+Update Tests
+theme update
+
+language update
+
+timezone update
+
+privacy update
+
+notification update
+
+security update
+
+partial update
+
+multiple fields
+
+timestamps updated
+Validation Tests
+invalid theme
+
+invalid language
+
+invalid privacy
+
+invalid timezone
+
+empty payload
+
+large payload
+Privacy Tests
+PUBLIC access
+
+FRIENDS access
+
+PRIVATE access
+
+owner access
+
+friend access
+
+public denied
+Notification Preference Tests
+achievement enabled
+
+achievement disabled
+
+reputation enabled
+
+reputation disabled
+
+marketplace enabled
+
+marketplace disabled
+
+security enabled
+
+security disabled
+
+system enabled
+
+system disabled
+Reset Tests
+reset theme
+
+reset language
+
+reset privacy
+
+reset notifications
+
+reset security
+
+reset all
+Activity Integration Tests
+update creates activity
+
+reset creates activity
+
+correct sourceApp
+
+correct title
+Notification Integration Tests
+privacy change notification
+
+security disable notification
+
+normal update no notification
+Persistence Tests
+save
+
+reload
+
+multi-user isolation
+
+update ordering
+
+timestamps
+Acceptance Criteria
+✓ 75+ unit tests
+
+✓ All tests pass
+
+✓ api-server typecheck PASS
+
+✓ No regression Sprint 1 → Sprint 9
+
+✓ Auto-create settings
+
+✓ Privacy resolver working
+
+✓ Notification preference resolver working
+
+✓ Activity integration working
+
+✓ Notification integration working
+
+✓ Ready for Universe Hub consumption

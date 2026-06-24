@@ -387,6 +387,7 @@ export default function SessionsPage() {
   const [confirmRevokeAll, setConfirmRevokeAll] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [, setTick] = useState(0);
+  const riskySectionRef = useRef<HTMLDivElement>(null);
 
   // Live ticker for relative timestamps
   useEffect(() => {
@@ -600,14 +601,22 @@ export default function SessionsPage() {
                           <div className="flex-1 h-px bg-white/8" />
                         </div>
                         <div className="space-y-3">
-                          {others.map(s => (
-                            <SessionCard
-                              key={s.id}
-                              session={augmented.find(a => a.id === s.id) ?? s}
-                              onRevoke={handleRevoke}
-                              isRevoking={revokingId === s.id}
-                            />
-                          ))}
+                          {others.map((s, idx) => {
+                            const aug = augmented.find(a => a.id === s.id) ?? s;
+                            const isFirstRisky = idx === others.findIndex(o => {
+                              const a = augmented.find(a => a.id === o.id);
+                              return a && (a as typeof aug & { risk?: string }).risk !== "safe";
+                            });
+                            return (
+                              <div key={s.id} ref={isFirstRisky ? riskySectionRef : undefined}>
+                                <SessionCard
+                                  session={aug}
+                                  onRevoke={handleRevoke}
+                                  isRevoking={revokingId === s.id}
+                                />
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     )}
@@ -628,7 +637,10 @@ export default function SessionsPage() {
                             Review flagged sessions and terminate any you don't recognize. If suspicious, change your password immediately.
                           </p>
                         </div>
-                        <button className="shrink-0 flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/25 hover:border-amber-500/40 px-2.5 py-1.5 rounded-lg bg-amber-500/10 transition-all">
+                        <button
+                          onClick={() => riskySectionRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })}
+                          className="shrink-0 flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 border border-amber-500/25 hover:border-amber-500/40 px-2.5 py-1.5 rounded-lg bg-amber-500/10 transition-all"
+                        >
                           Review <ArrowUpRight className="w-3 h-3" />
                         </button>
                       </motion.div>
